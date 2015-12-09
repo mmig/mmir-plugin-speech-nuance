@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin 
+    xmlns="http://cordova.apache.org/ns/plugins/1.0"
+	xmlns:android="http://schemas.android.com/apk/res/android"
+    id="de.dfki.iui.mmir.speech.NuancePlugin"
+    version="0.11.2">
+
+    <name>NuanceSpeechPlugin</name>
+    
+    <keywords>cordova,speech,asr,speech recognition,tts,text to speech</keywords>
+    
+    <description>
+      Cordova plugin for Nuance speech recognizer / syntheziser (using Nuance SpeechKit).
+      
+      Nuance NDEV
+       * SpeechKit Android SDK v1.4.12
+       * iOS SDK (DragonMobilSDK) v1.4.12
+      
+    </description>
+    
+    <license>MIT</license>
+
+    <author>DFKI</author>
+
+    <engines>
+        <engine name="cordova" version=">=3.0" />
+    </engines>
+
+
+    <js-module src="www/nuance.js" name="nuancePlugin">
+    	<clobbers target="window.plugins.nuancePlugin" />
+    </js-module>
+    
+    <!-- module implementation for integration into MMIR framework  -->
+    <asset
+        src="www/nuanceAudioInput.js"
+        target="mmirf/env/media/nuanceAudioInput.js" />
+    <asset
+        src="www/nuanceTextToSpeech.js"
+        target="mmirf/env/media/nuanceTextToSpeech.js" />
+       
+    <!-- android -->
+    <platform name="android">
+
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="NuanceSpeechPlugin" >
+		        <param name="android-package" value="de.dfki.iui.mmir.plugins.speech.nuance.NuanceSpeechPlugin" />
+		    </feature>
+        </config-file>
+        
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"></uses-permission>
+			<uses-permission android:name="android.permission.INTERNET"></uses-permission>
+			<uses-permission android:name="android.permission.RECORD_AUDIO"></uses-permission>
+			<uses-permission android:name="android.permission.READ_PHONE_STATE"></uses-permission>
+        </config-file>
+        
+        <source-file
+            src="src/android/de/dfki/iui/mmir/plugins/speech/nuance/NuanceSpeechPlugin.java"
+            target-dir="src/de/dfki/iui/mmir/plugins/speech/nuance" />
+        
+        <source-file
+            src="src/android/de/dfki/iui/mmir/plugins/speech/nuance/Credentials.java"
+            target-dir="src/de/dfki/iui/mmir/plugins/speech/nuance" />
+        
+        <source-file
+            src="src/android/de/dfki/iui/mmir/plugins/speech/nuance/NuanceEngine.java"
+            target-dir="src/de/dfki/iui/mmir/plugins/speech/nuance" />
+        
+        
+        <!-- NOTE references to beep (beep.wav) in NuanceEngine and NuancePlugin 
+        	 must be updated to point to the main Activity's resource R
+        -->
+        
+        <source-file
+            src="res/android/res/raw/beep.wav"
+            target-dir="res/raw" />
+        
+        
+        <!-- Nucance libraries:  -->
+        
+        <source-file
+            src="res/android/libs/nmdp_speech_kit.jar"
+            target-dir="libs" />
+        
+        <source-file
+            src="res/android/libs/armeabi/libnmsp_sk_speex.so"
+            target-dir="libs/armeabi" />
+            
+        <source-file
+            src="res/android/libs/arm64-v8a/libnmsp_sk_speex.so"
+            target-dir="libs/arm64-v8a" />
+        
+        
+        
+    </platform>
+    
+    <!-- ios -->
+    <platform name="ios">
+        
+        <config-file target="config.xml" parent="/*">
+            <feature name="NuanceSpeechPlugin" >
+                <param name="ios-package" value="NuanceSpeechPlugin" />
+            </feature>
+        </config-file>
+        
+        <header-file src="src/ios/de/nuancespeechplugin/Credentials.h" />
+        <source-file src="src/ios/de/nuancespeechplugin/Credentials.m"/>
+        
+        <header-file src="src/ios/de/nuancespeechplugin/ICredentials.h" />
+        
+        <header-file src="src/ios/de/nuancespeechplugin/NuanceSpeechPlugin.h" />
+        <source-file src="src/ios/de/nuancespeechplugin/NuanceSpeechPlugin.m" />
+        
+        <framework src="res/ios/frameworks/SpeechKit.framework" custom="true"/>
+        <framework src="AVFoundation.framework" />
+        <framework src="CFNetwork.framework" />
+        <framework src="Foundation.framework" />
+        <framework src="Security.framework" />
+        <framework src="UIKit.framework" />
+        
+
+    </platform>
+    
+</plugin>

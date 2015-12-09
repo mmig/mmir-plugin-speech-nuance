@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<project name="Update Version in MMIR Modules" default="update-version">
+	
+	<xmlproperty file="plugin.xml" collapseAttributes="true"/>
+	
+	<!--
+		access in plugin.xml
+			<plugin ... version="xxxx"> ... </plugin>
+		with
+			${plugin.version}
+	-->
+	
+	<property name="dir" location="www"/>
+	<property name="files" value="*AudioInput.js,*TextToSpeech.js"/>
+	
+	<target name="update-version" description="test">
+		
+		<echo>Update MMIR modules in directory ${dir}</echo>
+		<echo>set @version number to ${plugin.version} ...</echo>
+		
+		
+		<replaceregexp
+               match="^(\s*\*\s*@version\s+)\d[.\d]*\s*$"
+               replace="\1${plugin.version}"
+               byline="true">
+			
+			<fileset dir="${dir}" includes="${files}"/>
+			
+		</replaceregexp>
+		
+		<echo>done.</echo>
+		
+	</target>
+	
+</project>
