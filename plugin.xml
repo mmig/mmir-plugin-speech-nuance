@@ -4,7 +4,7 @@
     xmlns="http://cordova.apache.org/ns/plugins/1.0"
 	xmlns:android="http://schemas.android.com/apk/res/android"
     id="de.dfki.iui.mmir.speech.NuancePlugin"
-    version="0.11.2">
+    version="0.11.3">
 
     <name>NuanceSpeechPlugin</name>
     
@@ -15,7 +15,7 @@
       
       Nuance NDEV
        * SpeechKit Android SDK v1.4.12
-       * iOS SDK (DragonMobilSDK) v1.4.12
+       * iOS SDK (DragonMobilSDK) v1.4.21
       
     </description>
     
