@@ -60,7 +60,7 @@ execute the following command in Cordova project's root directory:
 
 ## Nuance LIBRARIES AND CREDENTIALS
 
-You need to to place your need to add the native libararies and resources from the Dragon Mobile SDK into
+You need to add the native libararies and resources from your the Dragon Mobile SDK into
 the plugin's `/res` directories.
 
 
@@ -76,7 +76,7 @@ the plugin's `/res` directories.
     ...
 
 
-Then edit the following files for adding your credentials:
+Then edit the following files for adding your Nuance credentials:
 
     /src/android/de/dfki/iui/mmir/plugins/speech/nuance/Credentials.java
     /src/ios/de/nuancespeechplugin/Credentials.m
