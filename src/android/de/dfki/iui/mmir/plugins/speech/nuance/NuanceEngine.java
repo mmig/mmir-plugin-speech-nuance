@@ -87,7 +87,7 @@ public class NuanceEngine {
 		);
 		
 		_speechKit.connect();
-		int beepResId = _context.getResources().getIdentifier("beep", "raw", _context.getApplicationInfo().packageName);//R.raw.beep;
+		int beepResId = _context.getResources().getIdentifier("rawbeep", "raw", _context.getApplicationInfo().packageName);
 		
 		// TODO: Keep an eye out for audio prompts not-working on the Android 2 or other 2.2 devices.
 		this._defaultStartPrompt = _speechKit.defineAudioPrompt(beepResId);
@@ -126,7 +126,7 @@ public class NuanceEngine {
 	private Prompt createDefaultStartPrompt(){
 		
 		if(this._speechKit != null){
-			int beepResId = _context.getResources().getIdentifier("beep", "raw", _context.getApplicationInfo().packageName);//R.raw.beep;
+			int beepResId = _context.getResources().getIdentifier("rawbeep", "raw", _context.getApplicationInfo().packageName);
 			return _speechKit.defineAudioPrompt(beepResId);
 		}
 		else {

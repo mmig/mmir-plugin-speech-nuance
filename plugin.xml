@@ -69,12 +69,12 @@
             target-dir="src/de/dfki/iui/mmir/plugins/speech/nuance" />
         
         
-        <!-- NOTE references to beep (beep.wav) in NuanceEngine and NuancePlugin 
+        <!-- NOTE references to raw beep sound (rawbeep.wav) in NuanceEngine and NuancePlugin 
         	 must be updated to point to the main Activity's resource R
         -->
         
         <source-file
-            src="res/android/res/raw/beep.wav"
+            src="res/android/res/raw/rawbeep.wav"
             target-dir="res/raw" />
         
         
