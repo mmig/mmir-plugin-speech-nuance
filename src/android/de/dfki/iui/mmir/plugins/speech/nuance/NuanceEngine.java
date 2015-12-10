@@ -1,5 +1,7 @@
 package de.dfki.iui.mmir.plugins.speech.nuance;
 
+import org.apache.cordova.CordovaPreferences;
+
 import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
@@ -40,17 +42,17 @@ public class NuanceEngine {
 		return instance;
 	}
 	
-	public static boolean createInstance(Context ctx) {
+	public static boolean createInstance(Context ctx, CordovaPreferences prefs) {
 		boolean isRecreated = false;
 		if(instance == null){
-			instance = new NuanceEngine(ctx);
+			instance = new NuanceEngine(ctx, prefs);
 			isRecreated = true;
 		}
 		else if(ctx != instance._context){
 			
 			instance.releaseResources();
 			
-			instance = new NuanceEngine(ctx);
+			instance = new NuanceEngine(ctx, prefs);
 			isRecreated = true;
 		}
 		else if(!instance.isInitializedResources()){
@@ -61,8 +63,9 @@ public class NuanceEngine {
 		return isRecreated;
 	}
 	
-	protected NuanceEngine(Context ctx) {
+	protected NuanceEngine(Context ctx, CordovaPreferences prefs) {
 		_context = ctx;
+		Credentials.init(prefs);
 		initializeResources();
 	}
 
@@ -77,13 +80,13 @@ public class NuanceEngine {
 			
 		_speechKit = SpeechKit.initialize(
 				_context, 
-				Credentials.SpeechKitAppId, 
-				Credentials.SpeechKitServer,//"sandbox.nmdp.nuancemobility.net",
-				Credentials.SpeechKitPort,//443,
-				Credentials.SpeechKitSsl,//true,
-				Credentials.SpeechKitCertSummary,//the summary String (must match the Common Name (CN) of the used certificate-data; as provided by Nuance)
-				Credentials.SpeechKitCertData,//the certificate data,
-				Credentials.SpeechKitApplicationKey
+				Credentials.getSpeechKitAppId(), 
+				Credentials.getSpeechKitServer(),
+				Credentials.getSpeechKitPort(),//the port number, e.g. 443,
+				Credentials.getSpeechKitSsl(),//true if SSL should be used,
+				Credentials.getSpeechKitCertSummary(),//the summary String (must match the Common Name (CN) of the used certificate-data; as provided by Nuance)
+				Credentials.getSpeechKitCertData(),//the certificate data,
+				Credentials.getSpeechKitAppKey()
 		);
 		
 		_speechKit.connect();

@@ -3,6 +3,7 @@ package de.dfki.iui.mmir.plugins.speech.nuance;
 import java.util.LinkedList;
 import java.util.Locale;
 
+import org.apache.cordova.CordovaPreferences;
 import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
@@ -91,9 +92,9 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 
 	@Override
 	public void initialize(CordovaInterface cordova, CordovaWebView webView) {
-		initNuanceEngine(cordova.getActivity());
 		LOG.d(PLUGIN_NAME,"initializing...");
 		super.initialize(cordova, webView);
+		initNuanceEngine(cordova.getActivity(), this.preferences);
 	}
 	@Override
 	public void onResume(boolean multitasking) {
@@ -119,10 +120,11 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 	}
 
 	private void initNuanceEngine() {
-		this.initNuanceEngine(this.cordova.getActivity());
+		this.initNuanceEngine(this.cordova.getActivity(), this.preferences);
 	}
-	private void initNuanceEngine(Context context) {
-		boolean res = NuanceEngine.createInstance(context);
+	
+	private void initNuanceEngine(Context context, CordovaPreferences prefs) {
+		boolean res = NuanceEngine.createInstance(context, prefs);
 		if(res)
 			LOG.d(PLUGIN_NAME,"(re-)initializing...");
 	}

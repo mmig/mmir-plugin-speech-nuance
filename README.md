@@ -76,9 +76,35 @@ the plugin's `/res` directories.
     ...
 
 
-Then edit the following files for adding your Nuance credentials:
+Then edit the Cordova `config.xml` in the project's root directory and add your credentials (the example below
+only contains "mock" data and will not work):
+```xml
+<?xml version='1.0' encoding='utf-8'?>
 
-    /src/android/de/dfki/iui/mmir/plugins/speech/nuance/Credentials.java
+<widget id="...
+
+    <preference name="nuanceAppKey" value="{ 
+		(byte)0x... <copy & paste your app key here, in Android format>
+	}"/>
+    <preference name="nuanceAppId" value="NMDPTRIAL_...<copy & paste your app ID here>"/>
+    <preference name="nuanceServerUrl" value="<copy & paste the server URL for the SpeechKit service>"/>
+    <preference name="nuanceServerPort" value="<copy & paste the port number>"/>
+    <preference name="nuanceServerSsl" value="<use true, if you are using SSL>"/>
+    
+    <!-- OPTIONAL (can be omitted)
+    		if SSL is used, this settings can be used for strengthening the encryption
+     -->
+    <preference name="nuanceCertSummary" value="<copy & paste the cert summary>"/>
+	 <!-- OPTIONAL (can be omitted)
+    		if SSL is used, this settings can be used for strengthening the encryption
+     -->
+    <!-- preference name="nuanceCertData" value="<copy & paste the cert data>"/-->
+...
+</widget>
+```
+
+NOTE: currently, for **iOS** the credentials have to be "manually" inserted into the Credentials class at
+
     /src/ios/de/nuancespeechplugin/Credentials.m
 
 
