@@ -4,7 +4,7 @@
     xmlns="http://cordova.apache.org/ns/plugins/1.0"
 	xmlns:android="http://schemas.android.com/apk/res/android"
     id="de.dfki.iui.mmir.speech.NuancePlugin"
-    version="0.11.3">
+    version="0.12.0">
 
     <name>NuanceSpeechPlugin</name>
     
@@ -68,17 +68,16 @@
             src="src/android/de/dfki/iui/mmir/plugins/speech/nuance/NuanceEngine.java"
             target-dir="src/de/dfki/iui/mmir/plugins/speech/nuance" />
         
-        
-        <!-- NOTE references to raw beep sound (rawbeep.wav) in NuanceEngine and NuancePlugin 
-        	 must be updated to point to the main Activity's resource R
-        -->
-        
         <source-file
             src="res/android/res/raw/rawbeep.wav"
             target-dir="res/raw" />
         
         
-        <!-- Nucance libraries:  -->
+        <!-- Nucance libraries:
+         		
+         		put/copy the libraries from your Android Dragon Mobile SDK into your local repo
+         		(YOU SHOULD NOT upload these into a public repo!)
+         -->
         
         <source-file
             src="res/android/libs/nmdp_speech_kit.jar"
@@ -119,6 +118,12 @@
         <header-file src="src/ios/de/nuancespeechplugin/NuanceSpeechPlugin.h" />
         <source-file src="src/ios/de/nuancespeechplugin/NuanceSpeechPlugin.m" />
         
+        <!-- Nucance libraries:
+         		
+         		put/copy the libraries from your iOS Dragon Mobile SDK into your local repo
+         		(YOU SHOULD NOT upload these into a public repo!)
+         -->
+         
         <framework src="res/ios/frameworks/SpeechKit.framework" custom="true"/>
         <framework src="AVFoundation.framework" />
         <framework src="CFNetwork.framework" />
