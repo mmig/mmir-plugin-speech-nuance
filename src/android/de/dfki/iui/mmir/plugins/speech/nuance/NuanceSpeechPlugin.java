@@ -581,7 +581,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 					msg.putOpt(TTS_DETAILS_FIELD_NAME, msgDetails);
 					
 					if(msgType == SpeakResultTypes.TTS_ERROR){
-						msg.putOpt(TTS_ERROR_CODE_FIELD_NAME, msgDetails);
+						msg.putOpt(TTS_ERROR_CODE_FIELD_NAME, errorCode);
 					}
 					
 					return msg;
