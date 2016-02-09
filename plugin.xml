@@ -4,7 +4,7 @@
     xmlns="http://cordova.apache.org/ns/plugins/1.0"
 	xmlns:android="http://schemas.android.com/apk/res/android"
     id="de.dfki.iui.mmir.speech.NuancePlugin"
-    version="0.12.0">
+    version="0.12.1">
 
     <name>NuanceSpeechPlugin</name>
     
