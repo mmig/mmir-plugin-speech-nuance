@@ -1,7 +1,7 @@
 # mmir-plugin-speech-nuance
 ----
 
-Cordova plugin (3.x) for the MMIR framework that uses the Nuance SpeechKit (Dragon Mobile SDK)
+Cordova plugin (5.x) for the MMIR framework that uses the Nuance SpeechKit (Dragon Mobile SDK)
 for speech recognition and synthesis
 
 
@@ -149,7 +149,32 @@ into into the platform folders of the www-resource files to:
 
     /www/mmirf/env/media/*
 
- 
+
+
+<br>
+TIP: if you are using _Eclipse_ you can add _links_ to these files in your project, so that
+     they appear in your app's `/www` directory at `/www/mmirf/env/media/*` 
+     Either use _Eclipse_'s `New File` dialog or edit `/.project` by adding the following
+     somewhere within the `<projectDescription>` tag:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+  ...
+  <linkedResources>
+    <link>
+      <name>www/mmirf/env/media/nuanceAudioInput.js</name>
+      <type>1</type>
+      <locationURI>$%7BPROJECT_LOC%7D/plugins/dfki-mmir-plugin-speech-nuance/www/nuanceAudioInput.js</locationURI>
+    </link>
+    <link>
+      <name>www/mmirf/env/media/nuanceTextToSpeech.js</name>
+      <type>1</type>
+      <locationURI>$%7BPROJECT_LOC%7D/plugins/dfki-mmir-plugin-speech-nuance/www/nuanceTextToSpeech.js</locationURI>
+    </link>
+  </linkedResources>
+  ...
+</projectDescription>
+``` 
 ## MMIR CONFIGURATION
 
 for configuring the MMIR app to use this plugin/module for its speech input/output do the following: 
@@ -193,14 +218,14 @@ NOTE:
 "building" is not necessary for using the plugin, but it
 may provide helpful feedback during plugin development.
 
-This project requires Cordova 3.x for building the Java source.
+This project requires Cordova 5.x for building the Java source.
 
 You can checkout the CordovaLib project from a repository and then
 reference the checked-out project from this project:
 
-(1) checkout the CordovaLib project into the same Eclipse workspace: 
+(1) checkout the Cordova5Lib project into the same Eclipse workspace: 
 
-    t.b.a.: XXXX/CordovaLib 
+    t.b.a.: XXXX/Cordova5Lib 
 
 (2) (in Eclipse) open the project Properties for this project, goto "Java Build Path", open tab "Projects"
  and add the CordovaLib project (you may also need to clean / rebuild the project).

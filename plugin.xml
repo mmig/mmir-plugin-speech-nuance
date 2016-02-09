@@ -3,8 +3,8 @@
 <plugin 
     xmlns="http://cordova.apache.org/ns/plugins/1.0"
 	xmlns:android="http://schemas.android.com/apk/res/android"
-    id="de.dfki.iui.mmir.speech.NuancePlugin"
-    version="0.12.1">
+    id="dfki-mmir-plugin-speech-nuance"
+    version="0.12.2">
 
     <name>NuanceSpeechPlugin</name>
     
@@ -24,12 +24,12 @@
     <author>DFKI</author>
 
     <engines>
-        <engine name="cordova" version=">=3.0" />
+        <engine name="cordova" version=">=5.0" />
     </engines>
 
 
-    <js-module src="www/nuance.js" name="nuancePlugin">
-    	<clobbers target="window.plugins.nuancePlugin" />
+    <js-module src="www/nuance.js" name="nuanceSpeechPlugin">
+    	<clobbers target="window.cordova.plugins.nuanceSpeechPlugin" />
     </js-module>
     
     <!-- module implementation for integration into MMIR framework  -->

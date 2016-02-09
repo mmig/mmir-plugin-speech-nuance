@@ -77,7 +77,7 @@ const NSString* ASR_TYPE_RECORDING_BEGIN = @"RECORDING_BEGIN";
 const NSString* ASR_TYPE_RECORDING_DONE = @"RECORDING_DONE";
 
 const NSString* EMPTY_STRING = @"";
-const NSString* JS_PLUGIN_ID = @"de.dfki.iui.mmir.speech.NuancePlugin.nuancePlugin";
+const NSString* JS_PLUGIN_ID = @"dfki-mmir-plugin-speech-nuance.nuanceSpeechPlugin";
 
 //Pattest
 BOOL isFinal;

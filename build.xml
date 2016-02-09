@@ -12,8 +12,9 @@
 	
 	<property name="dir" location="www"/>
 	<property name="files" value="*AudioInput.js,*TextToSpeech.js"/>
+	<property name="package-info" value="package.json"/>
 	
-	<target name="update-version" description="test">
+	<target name="update-version" description="update files with information from plugin.xml">
 		
 		<echo>Update MMIR modules in directory ${dir}</echo>
 		<echo>set @version number to ${plugin.version} ...</echo>
@@ -25,6 +26,26 @@
                byline="true">
 			
 			<fileset dir="${dir}" includes="${files}"/>
+			
+		</replaceregexp>
+		
+		<echo>update ${package-info} to version ${plugin.version}, and set name to ${plugin.id} ...</echo>
+		
+		<replaceregexp
+               match="^(\s*&quot;version&quot;\s*:\s*&quot;)\d[.\d]*&quot;\s*,\s*$"
+               replace="\1${plugin.version}&quot;,"
+               byline="true">
+			
+			<fileset dir="./" includes="${package-info}"/>
+			
+		</replaceregexp>
+		
+		<replaceregexp
+               match="^(\s*&quot;name&quot;\s*:\s*&quot;)[^&quot;]+&quot;\s*,\s*$"
+               replace="\1${plugin.id}&quot;,"
+               byline="true">
+			
+			<fileset dir="./" includes="${package-info}"/>
 			
 		</replaceregexp>
 		

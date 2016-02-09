@@ -25,8 +25,8 @@
  */
 
 /**
- * part of Cordova plugin: de.dfki.iui.mmir.NuancePlugin
- * @version 0.12.1
+ * part of Cordova plugin: dfki-mmir-plugin-speech-nuance
+ * @version 0.12.2
  * @ignore
  */
 newMediaPlugin = {
@@ -45,7 +45,7 @@ newMediaPlugin = {
 			 * @type NuancePlugin
 			 * @memberOf NuanceAndroidAudioInput#
 			 */
-			var nuancePlugin = window.plugins.nuancePlugin;
+			var nuancePlugin = window.cordova.plugins.nuanceSpeechPlugin;
 
 			/**  @memberOf NuanceAndroidAudioInput# */
 			var id = 0;
