@@ -26,7 +26,7 @@
 
 /**
  * part of Cordova plugin: de.dfki.iui.mmir.NuancePlugin
- * @version 0.12.1
+ * @version 0.12.3
  * @ignore
  */
 newMediaPlugin = {
