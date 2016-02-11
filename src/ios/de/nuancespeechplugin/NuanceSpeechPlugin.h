@@ -1,5 +1,4 @@
-//
-//  NuanceSpeechPlugin
+//  NuanceSpeechPlugin.m
 
 
 #import <Cordova/CDV.h>
