@@ -4,7 +4,7 @@
     xmlns="http://cordova.apache.org/ns/plugins/1.0"
 	xmlns:android="http://schemas.android.com/apk/res/android"
     id="dfki-mmir-plugin-speech-nuance"
-    version="0.12.2">
+    version="0.12.3">
 
     <name>NuanceSpeechPlugin</name>
     
@@ -12,11 +12,6 @@
     
     <description>
       Cordova plugin for Nuance speech recognizer / syntheziser (using Nuance SpeechKit).
-      
-      Nuance NDEV
-       * SpeechKit Android SDK v1.4.12
-       * iOS SDK (DragonMobilSDK) v1.4.21
-      
     </description>
     
     <license>MIT</license>
