@@ -2,7 +2,6 @@
 
 
 #import "NuanceSpeechPlugin.h"
-#import "ICredentials.h"
 #import "Credentials.h"
 #import <SpeechKit/SpeechKit.h>
 
@@ -47,38 +46,28 @@ NSDate *TimerStart;
     NSLog(@"NuanceSpeechPlugin.initHelper: Entered method.");
     
     lastMicLevel = 0;
-    
-    NSString *credentialClassName = @"Credentials"; //[command.arguments objectAtIndex:0];
-    NSLog(@"NuanceSpeechPlugin.initHelper: credentialClassName [%@].",  credentialClassName);
-    
+       
     // construct the credential object
-    id<ICredentials> creds = nil;
-    Class credClass = NSClassFromString(credentialClassName);
-    if (credClass != nil){
-        NSLog(@"NuanceSpeechPlugin.initHelper: Credentials class loaded.");
-        creds = [[credClass alloc] init] ;
-        if (creds != nil){
-            NSLog(@"NuanceSpeechPlugin.initHelper: Credentials class intialized.");
-        }
-    }
+   Credentials *creds = [[Credentials alloc ] initWithSettings:self.commandDelegate.settings];
+
     
     // get the app id
-    NSString *appId = [creds getAppId];
+    NSString *appId = creds.appId;
     NSLog(@"NuanceSpeechPlugin.initHelper: app id [%@].",  appId);
     
     // get the parameters
     
-    NSString *serverName = [creds getServerName];//creds.serverName;
-    NSLog(@"NuanceSpeechPlugin.initHelper: serverName [%@].",  serverName);
-    NSString *portStr = [creds getPort];//creds.port;
+    NSString *serverUrl = creds.serverUrl;
+    NSLog(@"NuanceSpeechPlugin.initHelper: serverUrl [%@].",  serverUrl);
+    NSString *portStr = creds.serverPort;
     NSLog(@"NuanceSpeechPlugin.initHelper: port [%@].",  portStr);
-    NSString *enableSSLStr = [creds getSSLEnabled]; //creds.sslEnabled;
+    NSString *enableSSLStr = creds.sslEnabled;
     NSLog(@"NuanceSpeechPlugin.initHelper: enableSSL [%@].",  enableSSLStr);
     
     
     // initialize speech kit
     [SpeechKit setupWithID: appId
-     host: serverName
+     host: serverUrl
      port: [portStr intValue]
      useSSL: [enableSSLStr boolValue]
      delegate:self];

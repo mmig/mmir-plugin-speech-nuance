@@ -2,18 +2,51 @@
 
 
 #import "Credentials.h"
+unsigned char SpeechKitApplicationKey[64];
 
-const unsigned char SpeechKitApplicationKey[] = <the app key>;
+@implementation Credentials
+//@synthesize appId, appKey, sslEnabled, serverPort, serverUrl;
 
-@implementation Credentials 
-//@synthesize appId, appKey, sslEnabled, port, serverName;
-@synthesize appKey;
 
-NSString* APP_ID = <the app ID>;
-NSString* SERVER_NAME = <the URL for accessing the SpeechKit service>;
-NSString* SERVER_PORT = <the port number>;
-NSString* SSL_ENABLED = <if SSL service is used or not>;
+- (id)initWithSettings:(NSMutableDictionary*)settings{
+	self = [super init];
+	
+	self.serverUrl = [settings objectForKey:[@"nuanceServerUrl" lowercaseString]];
+	self.serverPort = [settings objectForKey:[@"nuanceServerPort" lowercaseString]];
+	self.sslEnabled = [settings objectForKey:[@"nuanceServerSsl" lowercaseString]];
+	
+	//self.certSummary = [settings objectForKey:[@"nuanceCertSummary" lowercaseString]];
+	//self.certData = [settings objectForKey:[@"nuanceCertData" lowercaseString]];
+	
+	self.appId = [settings objectForKey:[@"nuanceAppId" lowercaseString]];
+	NSString* tempAppKey = [settings objectForKey:[@"nuanceAppKey" lowercaseString]];
+	tempAppKey = [[tempAppKey stringByReplacingOccurrencesOfString:@"(byte)0x"
+                                                            withString:@""]
+                  mutableCopy];
+                  
+    tempAppKey = [[tempAppKey stringByReplacingOccurrencesOfString:@"{"
+                                                            withString:@""]
+                  mutableCopy];           
+                  
+    tempAppKey = [[tempAppKey stringByReplacingOccurrencesOfString:@"}"
+                                                            withString:@""]
+                  mutableCopy];        
+                  
+	NSArray *appHexKey = [tempAppKey componentsSeparatedByString:@", "];
+	//NSUInteger *elements = [appHexKey count];
+	 
+	int i;
+	for(i=0;i<64;i++){
+		unsigned int result = 0;
+		NSScanner* scanner = [NSScanner scannerWithString:appHexKey[i]];
+		[scanner scanHexInt:&result];
+		SpeechKitApplicationKey[i] = (unsigned short) result;
+	}
+	return self;
+};
 
+
+/*
 -(NSString *) getAppId {
     return [NSString stringWithString:APP_ID];
 };
@@ -29,5 +62,5 @@ NSString* SSL_ENABLED = <if SSL service is used or not>;
 -(NSString *) getSSLEnabled {
     return [NSString stringWithString:SSL_ENABLED];
 };
-
+*/
 @end
