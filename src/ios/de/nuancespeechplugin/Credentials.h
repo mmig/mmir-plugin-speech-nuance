@@ -1,30 +1,16 @@
 //  Credentials.h
-
-
 #import <Foundation/Foundation.h>
-#import "ICredentials.h"
 
-@interface Credentials : NSObject <ICredentials>{
-    
-   // NSString* appId;
-    unsigned char* appKey;
-   // NSString* serverName;
-   // NSString* port;
-   // NSString* sslEnabled;
-    
+@interface Credentials : NSObject{
 }
 
-//@property (readonly) NSString* appId;
-@property (readonly) unsigned char* appKey;
+@property NSString* appId;
+@property unsigned char* appKey;
+@property NSString* serverUrl;
+@property NSString* serverPort;
+@property NSString* sslEnabled;
 
-//@property (readonly) NSString* serverName;
-//@property (readonly) NSString* port;
-//@property (readonly) NSString* sslEnabled;
-
--(NSString*) getAppId;
--(NSString*) getServerName;
--(NSString*) getPort;
--(NSString*) getSSLEnabled;
+- (id)initWithSettings:(NSMutableDictionary*)settings;
    
 
 @end
