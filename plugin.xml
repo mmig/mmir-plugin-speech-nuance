@@ -108,8 +108,6 @@
         <header-file src="src/ios/de/nuancespeechplugin/Credentials.h" />
         <source-file src="src/ios/de/nuancespeechplugin/Credentials.m"/>
         
-        <header-file src="src/ios/de/nuancespeechplugin/ICredentials.h" />
-        
         <header-file src="src/ios/de/nuancespeechplugin/NuanceSpeechPlugin.h" />
         <source-file src="src/ios/de/nuancespeechplugin/NuanceSpeechPlugin.m" />
         
