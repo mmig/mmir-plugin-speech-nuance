@@ -22,7 +22,7 @@ into the platform's resource folders `<www assets>/mmirf/env/media/nuance*.js`
 It is *recommended* to create a local copy of the plugin/repository and place your resources and credentials
 for Dragon Mobile SDK there (i.e. not the installation directly from the GIT repository).
 
-See the section below for installing [from a local copy of the repository](#from-local-copy-of-the-repository)
+See the section below for installing [from a local copy of the repository](#from-local-copy-of-the-repository-recommended)
 and the section about the [Nuance libraries and credentials](#nuance-libraries-and-credentials).
 
 
@@ -37,7 +37,7 @@ execute the following command in Cordova project's root directory:
     cordova plugin add https://github.com/mmig/mmir-plugin-speech-nuance.git
 
 
-### From local copy of the repository
+### From local copy of the repository (recommended)
 
 (1) check out the repository into a local directory (or download its ZIP file and decompress it)
 
@@ -103,11 +103,6 @@ only contains "mock" data and will not work):
 </widget>
 ```
 
-NOTE: currently, for **iOS** the credentials have to be "manually" inserted into the Credentials class at
-
-    /src/ios/de/nuancespeechplugin/Credentials.m
-
-
 #### Android Dragon Mobile SDK files
 
 the decompressed resources for the Android SDK should contain a directory `/libs`
@@ -122,7 +117,7 @@ with the following contents (that need to be copied to the plugin's `/res/androi
   /libs/x86/libnmsp_sk_speex.so
 ```
 
-#### Android Dragon Mobile SDK files
+#### iOS Dragon Mobile SDK files
 
 the decompressed resources for the iOS SDK should contain a directory `/libs`
 with the following contents (that need to be copied to the plugin's `/res/ios` directory):
@@ -133,8 +128,8 @@ with the following contents (that need to be copied to the plugin's `/res/ios` d
   /Resources/*
   /SpeechKit
 ```
-_(note that you should not use the symbolic links in `/SpeechKit.framework`, but the actual files
-in `/SpeechKit.framework/Versions/<current version>`)_
+_(if you encounter problems, you should try to avoid using the symbolic links in `/SpeechKit.framework`,
+  and instead use the actual files in `/SpeechKit.framework/Versions/<current version>`)_
 
 
 ## JAVASCRIPT MMIR FILES
@@ -225,7 +220,7 @@ reference the checked-out project from this project:
 
 (1) checkout the Cordova5Lib project into the same Eclipse workspace: 
 
-    t.b.a.: XXXX/Cordova5Lib 
+    t.b.d.: XXXX/Cordova5Lib 
 
 (2) (in Eclipse) open the project Properties for this project, goto "Java Build Path", open tab "Projects"
  and add the CordovaLib project (you may also need to clean / rebuild the project).
@@ -235,6 +230,8 @@ reference the checked-out project from this project:
 ----
 t.b.d.
 
+(NOTE that the functions of this module are exported to the frameworks [mmir.MediaManager][2])
+
 
 [1]: https://github.com/mmig/mmir
-
+[2]: https://mmig.github.io/mmir/api/symbols/mmir.MediaManager.html
