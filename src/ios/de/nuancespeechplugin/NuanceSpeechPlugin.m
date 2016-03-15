@@ -529,7 +529,7 @@ NSDate *TimerStart;
         NSLog(@"NuanceSpeechPlugin.updateVUMeter: jscall [%@].", jsCallStr);
         //[self.webView stringByEvaluatingJavaScriptFromString:jsCallStr];
         [self.webViewEngine evaluateJavaScript:jsCallStr completionHandler:^(id obj, NSError* error) {
-            // TODO: obj can be something other than string
+            // TODO: handle error
             if(error != Nil) NSLog(@"NuanceSpeechPlugin.updateVUMeter: ERROR [%@].", error);
         }];
         
