@@ -230,8 +230,10 @@ reference the checked-out project from this project:
 ----
 t.b.d.
 
-(NOTE that the functions of this module are exported to the frameworks [mmir.MediaManager][2])
+NOTE 1: for recognition interface (audio input) see the wiki's general [Speech Input API][2] 
+NOTE 2: the functions of this module are exported to the framework's [mmir.MediaManager][3])
 
 
 [1]: https://github.com/mmig/mmir
-[2]: https://mmig.github.io/mmir/api/symbols/mmir.MediaManager.html
+[2]: https://github.com/mmig/mmir/wiki/3.9.2-Speech-Processing-in-MMIR#speech-input-api
+[3]: https://mmig.github.io/mmir/api/symbols/mmir.MediaManager.html
