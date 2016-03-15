@@ -4,14 +4,14 @@
     xmlns="http://cordova.apache.org/ns/plugins/1.0"
 	xmlns:android="http://schemas.android.com/apk/res/android"
     id="dfki-mmir-plugin-speech-nuance"
-    version="0.12.3">
+    version="0.12.4">
 
     <name>NuanceSpeechPlugin</name>
     
     <keywords>cordova,speech,asr,speech recognition,tts,text to speech</keywords>
     
     <description>
-      Cordova plugin for Nuance speech recognizer / syntheziser (using Nuance SpeechKit).
+      Cordova plugin for Nuance speech recognizer / syntheziser (using Nuance SpeechKit v1.x).
     </description>
     
     <license>MIT</license>
