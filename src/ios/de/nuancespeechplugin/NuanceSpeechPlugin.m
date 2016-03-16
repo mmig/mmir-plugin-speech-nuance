@@ -527,7 +527,11 @@ NSDate *TimerStart;
         //NSString *jsCallStr = [NSString stringWithFormat:@"cordova.require('%@').fireMicLevelChanged(%@);",JS_PLUGIN_ID, volumeStr];
         NSString *jsCallStr = [NSString stringWithFormat:@"cordova.require('%@').fireMicLevelChanged(%f);",JS_PLUGIN_ID, f_volume];
         NSLog(@"NuanceSpeechPlugin.updateVUMeter: jscall [%@].", jsCallStr);
-        [self.webView stringByEvaluatingJavaScriptFromString:jsCallStr];
+        //[self.webView stringByEvaluatingJavaScriptFromString:jsCallStr];
+        [self.webViewEngine evaluateJavaScript:jsCallStr completionHandler:^(id obj, NSError* error) {
+            // TODO: handle error
+            if(error != Nil) NSLog(@"NuanceSpeechPlugin.updateVUMeter: ERROR [%@].", error);
+        }];
         
         if(isAudioLevelsRequested){
             [self performSelector:@selector(updateVUMeter) withObject:nil afterDelay:MIC_LEVEL_DELAY];

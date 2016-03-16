@@ -4,14 +4,14 @@
     xmlns="http://cordova.apache.org/ns/plugins/1.0"
 	xmlns:android="http://schemas.android.com/apk/res/android"
     id="dfki-mmir-plugin-speech-nuance"
-    version="0.12.3">
+    version="0.12.4">
 
     <name>NuanceSpeechPlugin</name>
     
     <keywords>cordova,speech,asr,speech recognition,tts,text to speech</keywords>
     
     <description>
-      Cordova plugin for Nuance speech recognizer / syntheziser (using Nuance SpeechKit).
+      Cordova plugin for Nuance speech recognizer / syntheziser (using Nuance SpeechKit v1.x).
     </description>
     
     <license>MIT</license>
@@ -21,7 +21,21 @@
     <engines>
         <engine name="cordova" version=">=5.0" />
     </engines>
-
+    
+    <!-- preferences that MUST be set in Cordova's config.xml in the project's root directory -->
+    <preference name="nuanceAppId" default="NOT_SET" />
+    <preference name="nuanceAppKey" default="NOT_SET" />
+    <preference name="nuanceServerUrl" default="NOT_SET" />
+    <preference name="nuanceServerPort" default="443" />
+    <preference name="nuanceServerSsl" default="true" />
+    
+    <!-- optional preferences that SHOULD be set in Cordova's config.xml
+         in the project's root directory
+         
+         (NOTE these are disabled and included here only for documentation)
+     -->
+    <!-- preference name="nuanceCertSummary" default="NOT_SET" /-->
+    <!-- preference name="nuanceCertData" default="NOT_SET" /-->
 
     <js-module src="www/nuance.js" name="nuanceSpeechPlugin">
     	<clobbers target="window.cordova.plugins.nuanceSpeechPlugin" />
