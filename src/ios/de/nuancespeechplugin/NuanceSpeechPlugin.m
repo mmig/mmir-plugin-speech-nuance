@@ -10,19 +10,16 @@
 
 
 @implementation NuanceSpeechPlugin
-@synthesize recognizerInstance, vocalizer;
+@synthesize skSession, skTransaction;
 
 NSDate *TimerStart;
 
-
 - (void)dealloc {
-    
     
     if (lastResultArray != nil){
         lastResultArray = nil;
     }
 }
-
 
 /*
  * Creates a dictionary with the return code and text passed in
@@ -36,7 +33,6 @@ NSDate *TimerStart;
     [returnDictionary setObject:returnText forKey:KEY_RETURN_TEXT];
     
     return returnDictionary;
-    
 }
 
 /*
@@ -46,10 +42,9 @@ NSDate *TimerStart;
     NSLog(@"NuanceSpeechPlugin.initHelper: Entered method.");
     
     lastMicLevel = 0;
-       
+    
     // construct the credential object
-   Credentials *creds = [[Credentials alloc ] initWithSettings:self.commandDelegate.settings];
-
+    Credentials *creds = [[Credentials alloc ] initWithSettings:self.commandDelegate.settings];
     
     // get the app id
     NSString *appId = creds.appId;
@@ -61,16 +56,14 @@ NSDate *TimerStart;
     NSLog(@"NuanceSpeechPlugin.initHelper: serverUrl [%@].",  serverUrl);
     NSString *portStr = creds.serverPort;
     NSLog(@"NuanceSpeechPlugin.initHelper: port [%@].",  portStr);
-    NSString *enableSSLStr = creds.sslEnabled;
-    NSLog(@"NuanceSpeechPlugin.initHelper: enableSSL [%@].",  enableSSLStr);
     
+    // Create a session
+    skSession = [[SKSession alloc] initWithURL:[NSURL URLWithString:creds.serverUrl] appToken:creds.appKey];
+    NSLog(@"appKey [%@]", creds.appKey);
     
-    // initialize speech kit
-    [SpeechKit setupWithID: appId
-     host: serverUrl
-     port: [portStr intValue]
-     useSSL: [enableSSLStr boolValue]
-     delegate:self];
+    if (!skSession) {
+        NSLog(@"Speechkit was not initialised");
+    }
     
     isInitialized = true;
     NSLog(@"NuanceSpeechPlugin.initHelper: Leaving method.");
@@ -81,7 +74,7 @@ NSDate *TimerStart;
  */
 - (void) pluginInitialize{
     NSLog(@"NuanceSpeechPlugin.pluginInitialize: Entered method.");
-    isAudioLevelsRequested = FALSE; //Pattest
+    isAudioLevelsRequested = FALSE;
     [self initHelper];
     NSLog(@"NuanceSpeechPlugin.pluginInitializet: Leaving method.");
 }
@@ -105,7 +98,6 @@ NSDate *TimerStart;
     NSMutableDictionary* returnDictionary;
     
     returnDictionary = [self createReturnDictionary: RC_SUCCESS withText: @"Success"];
-    //[returnDictionary setObject:EVENT_INIT_COMPLETE forKey:KEY_EVENT];
     
     result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:returnDictionary];
     
@@ -128,21 +120,17 @@ NSDate *TimerStart;
         lastResultArray = nil;
     }
     
-    if (vocalizer != nil){
-        [vocalizer cancel];
-    }
-    if (recognizerInstance != nil){
-        [recognizerInstance cancel];
+    if (skTransaction != nil){
+        [skTransaction cancel];
     }
     
     // destroy speech kit
-    [SpeechKit destroy];
+    //[SpeechKit destroy];
     
     CDVPluginResult *result;
     
     // create the return object
     NSMutableDictionary* returnDictionary = [self createReturnDictionary: RC_SUCCESS withText: @"Success"];
-    //[returnDictionary setObject:EVENT_CLEANUP_COMPLETE forKey:KEY_EVENT];
     
     // set the return status and object
     result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: returnDictionary];
@@ -163,7 +151,7 @@ NSDate *TimerStart;
 - (void) asr:(CDVInvokedUrlCommand*)command {
     NSLog(@"NuanceSpeechPlugin.asr: Entering method .");
     [self.commandDelegate runInBackground:^{
-        [self startRecognition:command withEosDetection:SKLongEndOfSpeechDetection];
+        [self startRecognition:command withEosDetection:SKTransactionEndOfSpeechDetectionLong];
     }];
     NSLog(@"NuanceSpeechPlugin.asr: Leaving method.");
 }
@@ -175,7 +163,7 @@ NSDate *TimerStart;
     NSString *isRecordingStr = isRecording ? @"YES" : @"NO";
     NSLog(@"NuanceSpeechPlugin.asr_short: vor thread stopped [%@]final [%@] recording [%@].", isStoppedStr, isFinalStr, isRecordingStr);
     [self.commandDelegate runInBackground:^{
-        [self startRecognition:command withEosDetection:SKShortEndOfSpeechDetection];
+        [self startRecognition:command withEosDetection:SKTransactionEndOfSpeechDetectionShort];
     }];
     
     NSLog(@"NuanceSpeechPlugin.asr_short: Leaving method.");
@@ -184,17 +172,19 @@ NSDate *TimerStart;
 - (void) start_rec:(CDVInvokedUrlCommand *)command {
     NSLog(@"NuanceSpeechPlugin.start_rec: Entering method .");
     [self.commandDelegate runInBackground:^{
-        [self startRecognition:command withEosDetection:SKNoEndOfSpeechDetection];
+        [self startRecognition:command withEosDetection:SKTransactionEndOfSpeechDetectionNone];
     }];
     NSLog(@"NuanceSpeechPlugin.start_rec: Leaving method.");
 }
 
-- (void) startRecognition:(CDVInvokedUrlCommand*)command withEosDetection:(SKEndOfSpeechDetection)detection {
+- (void) startRecognition:(CDVInvokedUrlCommand*)command withEosDetection:(SKTransactionEndOfSpeechDetection)detection {
     TICK;
     isStopped = 	false;
     isFinal = 		false;
     isCancelled = 	false;
-    NSLog(@"NuanceSpeechPlugin.startRecognition: Entered method. Session ID [%@]", [SpeechKit sessionID]);
+    
+    //PatEdit no equivalent found
+    //NSLog(@"NuanceSpeechPlugin.startRecognition: Entered method. Session ID [%@]", [SpeechKit sessionID]);
     
     NSMutableDictionary* returnDictionary;
     CDVPluginResult *result;
@@ -213,42 +203,42 @@ NSDate *TimerStart;
             NSString *recoType = @"dictation"; //[command.arguments objectAtIndex:0];
             NSLog(@"NuanceSpeechPlugin.startRecognition: Reco type [%@].", recoType);
             NSString *lang =@"de_DE"; //[command.arguments objectAtIndex:1];
-            //fix micspeech keine language
+            //fix micspeech no language
             NSLog(@"NuanceSpeechPlugin.startRecognition: Language [%@].", lang);
             
             if (lastResultArray != nil){
                 lastResultArray = nil;
             }
             
-            NSString *recognitionModel = SKDictationRecognizerType;
-            if ([recoType caseInsensitiveCompare:@"websearch"]){
-                recognitionModel = SKSearchRecognizerType;
-            }
-            NSLog(@"NuanceSpeechPlugin.startRecognition: detection set to [%lu].", (unsigned long)detection);
-            
-            NSLog(@"NuanceSpeechPlugin.startRecognition: Recognition model set to [%@].", recognitionModel);
-            if (recognizerInstance != nil) {
-                [recognizerInstance cancel];
-                recognizerInstance = nil;
+            /*
+             NSString *recognitionModel = SKDictationRecognizerType;
+             if ([recoType caseInsensitiveCompare:@"websearch"]){
+             recognitionModel = SKSearchRecognizerType;
+             }
+             
+             NSLog(@"NuanceSpeechPlugin.startRecognition: detection set to [%lu].", (unsigned long)detection);
+             
+             NSLog(@"NuanceSpeechPlugin.startRecognition: Recognition model set to [%@].", recognitionModel);
+             */
+            if (skTransaction != nil) {
+                [skTransaction cancel];
+                skTransaction = nil;
                 NSLog(@"NuanceSpeechPlugin.startRecognition: Canceled.");
             }
             TICK;
-            recognizerInstance = [[SKRecognizer alloc] initWithType:SKDictationRecognizerType
-                                                          detection:detection
-                                                           language:lang
-                                                           delegate:self];
+            
+            skTransaction = [skSession recognizeWithType:SKTransactionSpeechTypeDictation
+                                               detection:SKTransactionEndOfSpeechDetectionShort
+                                                language:@"eng-USA"
+                                                delegate:self];
+            
             TOCK;
             returnDictionary = [self createReturnDictionary: RC_SUCCESS withText: @"Success"];
-            //[returnDictionary setObject:EVENT_RECO_STARTED forKey:KEY_EVENT];
-            //[returnDictionary setObject:ASR_TYPE_RECORDING_BEGIN forKey:KEY_ASR_TYPE]; //Pattest
             keepCallBack = true;
-            
-            
         }
         else{
             NSLog(@"NuanceSpeechPlugin.startRecognition: WARN wrong parameter count.");
             returnDictionary = [self createReturnDictionary: RC_RECO_NOT_STARTED withText: @"Invalid parameters count passed."];
-            //[returnDictionary setObject:EVENT_RECO_ERROR forKey:KEY_EVENT];
         }
         
         
@@ -298,15 +288,13 @@ NSDate *TimerStart;
     //Pattest doneCallbackID = [callbackId mutableCopy];
     
     CDVPluginResult *result;
-    [recognizerInstance stopRecording];
+    [skTransaction stopRecording];
     
     
     //sende plugin-result erst wenn 1. mic zu recDidFinishRecording 2. letztes result durch
     
     NSMutableDictionary* returnDictionary = [self createReturnDictionary: RC_SUCCESS withText: @"Success"];
-    //[returnDictionary setObject:EVENT_RECO_STOPPED forKey:KEY_EVENT];
-    [returnDictionary setObject:EMPTY_STRING forKey:KEY_RESULT]; //Pattest
-    //[returnDictionary setObject:ASR_TYPE_RECORDING_DONE forKey:KEY_ASR_TYPE];
+    [returnDictionary setObject:EMPTY_STRING forKey:KEY_RESULT];
     
     result = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT messageAsDictionary: returnDictionary];
     [result setKeepCallbackAsBool:YES];
@@ -333,8 +321,8 @@ NSDate *TimerStart;
     if (lastResultArray != nil){
         
         
-        int numOfResults = [lastResultArray count];
-        NSLog(@"NuanceSpeechPlugin.getRecoResult: Result count [%d]", numOfResults);
+        unsigned long numOfResults = [lastResultArray count];
+        NSLog(@"NuanceSpeechPlugin.getRecoResult: Result count [%lu]", numOfResults);
         if (numOfResults > 0){
             
             returnDictionary = [self createReturnDictionary: RC_SUCCESS withText: @"Success"];
@@ -427,34 +415,39 @@ NSDate *TimerStart;
         NSLog(@"NuanceSpeechPlugin.startTTS: Text = [%@] Lang = [%@] Voice = [%@] isSSML [%@].", text, lang, voice, isSSMLstr);
         
         
-        if (vocalizer != nil){
-            vocalizer = nil;
+        if (skTransaction != nil){
+            skTransaction = nil;
         }
         
         if (text != nil){
             
             //if (![voice isEqual:[NSNull null]]){
-            if (!(voice == nil)){
-                NSLog(@"NuanceSpeechPlugin.startTTS: Initializing with voice.");
-                vocalizer = [[SKVocalizer alloc] initWithVoice:voice delegate:self];
-            }
-            else
-                if (!(lang == nil)){
-                    NSLog(@"NuanceSpeechPlugin.startTTS: Initializing with language.");
-                    vocalizer = [[SKVocalizer alloc] initWithLanguage:lang delegate:self];
-                }
-                else{
-                    returnDictionary = [self createReturnDictionary: RC_TTS_PARAMS_INVALID withText: @"Parameters invalid."];
-                }
-            
-            if (vocalizer != nil){
+            /*
+             if (!(voice == nil)){
+             NSLog(@"NuanceSpeechPlugin.startTTS: Initializing with voice.");
+             vocalizer = [[SKVocalizer alloc] initWithVoice:voice delegate:self];
+             }
+             else
+             if (!(lang == nil)){
+             NSLog(@"NuanceSpeechPlugin.startTTS: Initializing with language.");
+             vocalizer = [[SKVocalizer alloc] initWithLanguage:lang delegate:self];
+             }
+             else{
+             returnDictionary = [self createReturnDictionary: RC_TTS_PARAMS_INVALID withText: @"Parameters invalid."];
+             }
+             */
+            if (skSession != nil){
                 
                 if (isSSML) {
                     NSLog(@"NuanceSpeechPlugin.startTTS: About to speak text (with SSML).");
-                    [vocalizer speakMarkupString:text];
+                    [skSession speakMarkup:text
+                              withLanguage:lang
+                                  delegate:self];
                 } else {
                     NSLog(@"NuanceSpeechPlugin.startTTS: About to speak text.");
-                    [vocalizer speakString:text];
+                    [skSession speakString:text
+                              withLanguage:lang
+                                  delegate:self];
                 }
                 
                 
@@ -499,8 +492,8 @@ NSDate *TimerStart;
     NSMutableDictionary* returnDictionary;
     
     
-    if (vocalizer != nil){
-        [vocalizer cancel];
+    if (skTransaction != nil){
+        [skTransaction cancel];
     }
     
     returnDictionary = [self createReturnDictionary: RC_SUCCESS withText: @"Success"];
@@ -516,9 +509,9 @@ NSDate *TimerStart;
 
 - (void)updateVUMeter {
     NSLog(@"NuanceSpeechPlugin.updateVUMeter: Entering method.");
-    if ((recognizerInstance != nil) && (isRecording == true)){
+    if ((skTransaction != nil) && (isRecording == true)){
         
-        float f_volume = recognizerInstance.audioLevel;
+        float f_volume = [skTransaction audioLevel];
         f_volume += 90.0;
         NSString *str_volume = [NSString stringWithFormat:@"%f", f_volume];
         NSLog(@"NuanceSpeechPlugin.updateVUMeter: volumeStr [%@].", str_volume);
@@ -527,11 +520,14 @@ NSDate *TimerStart;
         //NSString *jsCallStr = [NSString stringWithFormat:@"cordova.require('%@').fireMicLevelChanged(%@);",JS_PLUGIN_ID, volumeStr];
         NSString *jsCallStr = [NSString stringWithFormat:@"cordova.require('%@').fireMicLevelChanged(%f);",JS_PLUGIN_ID, f_volume];
         NSLog(@"NuanceSpeechPlugin.updateVUMeter: jscall [%@].", jsCallStr);
+        
+        if ([self.webView isKindOfClass:[UIWebView class]]) {
+            // call a UIWebView specific method here, for example
+            [((UIWebView*)self.webView) stringByEvaluatingJavaScriptFromString:jsCallStr];
+        }
+        
         //[self.webView stringByEvaluatingJavaScriptFromString:jsCallStr];
-        [self.webViewEngine evaluateJavaScript:jsCallStr completionHandler:^(id obj, NSError* error) {
-            // TODO: handle error
-            if(error != Nil) NSLog(@"NuanceSpeechPlugin.updateVUMeter: ERROR [%@].", error);
-        }];
+        //[self.webView evaluateJavaScript:jsCallStr]; //later when we use the wkWebView
         
         if(isAudioLevelsRequested){
             [self performSelector:@selector(updateVUMeter) withObject:nil afterDelay:MIC_LEVEL_DELAY];
@@ -554,12 +550,12 @@ NSDate *TimerStart;
 
 
 #pragma mark -
-#pragma mark SKRecognizerDelegate methods
+#pragma mark SKTransactionDelegate methods
 
-- (void)recognizerDidBeginRecording:(SKRecognizer *)recognizer
+-(void)transactionDidBeginRecording:(SKTransaction *)transaction
 {
     //TOCK;
-    NSLog(@"NuanceSpeechPlugin.recognizerDidBeginRecording: Entered method. Recording started. [%@]", recoCallbackId);
+    NSLog(@"NuanceSpeechPlugin.transactionDidBeginRecording: Entered method. Recording started. [%@]", recoCallbackId);
     CDVPluginResult *result;
     NSMutableDictionary* returnDictionary;
     
@@ -584,22 +580,22 @@ NSDate *TimerStart;
         [self performSelector:@selector(updateVUMeter) withObject:nil afterDelay:MIC_LEVEL_DELAY];
     }
     
-    NSLog(@"NuanceSpeechPlugin.recognizerDidBeginRecording: Leaving method.");
+    NSLog(@"NuanceSpeechPlugintransactionDidBeginRecording Leaving method.");
 }
 
-- (void)recognizerDidFinishRecording:(SKRecognizer *)recognizer
+- (void)transactionDidFinishRecording:(SKTransaction *)transaction
 {
-    NSLog(@"NuanceSpeechPlugin.recognizerDidFinishRecording: Entered method. Recording finished. [%@]", recoCallbackId);
+    NSLog(@"NuanceSpeechPlugin.transactionDidFinishRecording: Entered method. Recording finished. [%@]", recoCallbackId);
     
     isRecording = false;
     
     if (isStopped){
-        NSLog(@"NuanceSpeechPlugin.recognizerDidFinishRecording: RecordingDone - stopped");
+        NSLog(@"NuanceSpeechPlugin.transactionDidFinishRecording: RecordingDone - stopped");
         isFinal = true;
     } else if (isCancelled){
-        NSLog(@"NuanceSpeechPlugin.recognizerDidFinishRecording: RecordingDone - cancelled");
+        NSLog(@"NuanceSpeechPlugin.transactionDidFinishRecording: RecordingDone - cancelled");
     } else {
-        NSLog(@"NuanceSpeechPlugin.recognizerDidFinishRecording: RecordingDone");
+        NSLog(@"NuanceSpeechPlugin.transactionDidFinishRecording: RecordingDone");
     }
     
     
@@ -626,18 +622,18 @@ NSDate *TimerStart;
      NSLog(@"NuanceSpeechPlugin.recognizerDidFinishRecording: release recognizerInstance");
      }*/
     
-    NSLog(@"NuanceSpeechPlugin.recognizerDidFinishRecording: Leaving method.");
+    NSLog(@"NuanceSpeechPlugin.transactionDidFinishRecording: Leaving method.");
 }
 
-- (void)recognizer:(SKRecognizer *)recognizer didFinishWithResults:(SKRecognition *)results
+- (void)transaction:(SKTransaction *)transaction didReceiveRecognition:(SKRecognition *)recognition
 {
-    NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithResults: Entered method. Got results. [%@]", recoCallbackId);
+    NSLog(@"NuanceSpeechPlugin.didReceiveRecognition: Entered method. Got results. [%@]", recoCallbackId);
     
-    NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithResults: Session id [%@].", [SpeechKit sessionID]); // for debugging purpose: printing out the speechkit session id
+    // NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithResults: Session id [%@].", [SpeechKit sessionID]); // for debugging purpose: printing out the speechkit session id
     
     isRecording = false;
     
-    long numOfResults = [results.results count];
+    long numOfResults = [recognition.details count];//[results.results count];
     NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithResults: Result count [%ld]", numOfResults);
     
     
@@ -648,23 +644,40 @@ NSDate *TimerStart;
     if (numOfResults > 0){
         
         
-        NSString *resultText = [results firstResult];
-        NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithResults: Result = [%@]", resultText);
+        NSString *resultText = [recognition text];//[results firstResult];
+        NSLog(@"NuanceSpeechPlugin.didReceiveRecognition: Result = [%@]", resultText);
         
         [returnDictionary setObject:resultText forKey:KEY_RESULT];
         
-        NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithResults: Score = [%@]", results.scores[0]);
-        [returnDictionary setObject:results.scores[0] forKey:@"score"];
+        //NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithResults: Score = [%@]", results.scores[0]);
+        NSArray* nBest = [recognition details];
+        SKRecognizedWord *firstBest = nBest[0];
         
+        [returnDictionary setObject: [NSNumber numberWithLong:(firstBest.confidence)] forKey:@"score"];
         
         NSMutableArray *resultArray = [[NSMutableArray alloc] init];
         
-        for (int i = 0; i < numOfResults; i++){
+        for (SKRecognizedPhrase* phrase in nBest) {
+            
+            NSString* text = [phrase text];
+            NSNumber *confidence = [NSNumber numberWithLong:([phrase confidence])];
+            
             NSMutableDictionary *resultDictionary = [[NSMutableDictionary alloc] init] ;
-            [resultDictionary setObject:results.results[i] forKey:@"value"];
-            [resultDictionary setObject:results.scores[i] forKey:@"confidence"];
+            [resultDictionary setObject:text forKey:@"value"];
+            [resultDictionary setObject:confidence  forKey:@"confidence"];
             [resultArray addObject:resultDictionary];
+            
         }
+        
+        
+        /*
+         for (int i = 0; i < numOfResults; i++){
+         NSMutableDictionary *resultDictionary = [[NSMutableDictionary alloc] init] ;
+         [resultDictionary setObject:results.results[i] forKey:@"value"];
+         [resultDictionary setObject:results.scores[i] forKey:@"confidence"];
+         [resultArray addObject:resultDictionary];
+         }
+         */
         
         lastResultArray = resultArray;
         
@@ -689,7 +702,7 @@ NSDate *TimerStart;
     }
     
     if(isFinal){ //Pattest
-        NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithResults: send doneCallback");
+        NSLog(@"NuanceSpeechPlugin.didReceiveRecognition: send doneCallback");
         CDVPluginResult *doneResult;
         NSMutableDictionary *doneReturnDictionary;
         doneReturnDictionary = [self createReturnDictionary: RC_SUCCESS withText: @"Success"];
@@ -701,21 +714,24 @@ NSDate *TimerStart;
         doneCallbackID = nil;
     }
     
-    recognizerInstance = nil;
-    NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithResults: Leaving method");
+    skTransaction = nil;
+    NSLog(@"NuanceSpeechPlugin.didReceiveRecognition: Leaving method");
     
 }
 
-- (void)recognizer:(SKRecognizer *)recognizer didFinishWithError:(NSError *)error suggestion:(NSString *)suggestion
+- (void)transaction:(SKTransaction *)transaction didFailWithError:(NSError *)error suggestion:(NSString *)suggestion
 {
-    NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithError: Entered method. Got error. [%@]", recoCallbackId);
-    NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithError: Session id [%@].", [SpeechKit sessionID]); // for debugging purpose: printing out the speechkit session id
     
+    
+    NSLog(@"NuanceSpeechPlugin.didReceiveRecognition: Entered method. Got error. [%@]", recoCallbackId);
+    /*
+     NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithError: Session id [%@].", [SpeechKit sessionID]); // for debugging purpose: printing out the speechkit session id
+     */
     isRecording = false;
     
     NSString *isFinalStr = isFinal ? @"YES" : @"NO";
     NSString *isStoppedStr = isStopped ? @"YES" : @"NO";
-    NSNumber* error_code  = [NSNumber numberWithInt:([error code])];
+    NSNumber* error_code  = [NSNumber numberWithLong:([error code])];
     
     NSString *msg = [NSString stringWithFormat: @"An error occurred during recognition (isFinal [%@] | isStopped [%@]),code [%@] ([%@]): [%@]",
                      isFinalStr,
@@ -725,7 +741,7 @@ NSDate *TimerStart;
                      suggestion
                      ];
     
-    NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithError: Error Msg. [%@]", msg);
+    NSLog(@"NuanceSpeechPlugin.didReceiveRecognition: Error Msg. [%@]", msg);
     CDVPluginResult *result;
     NSMutableDictionary* returnDictionary;
     
@@ -752,7 +768,7 @@ NSDate *TimerStart;
     
     
     if(isFinal || isStopped){ //Pattest
-        NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithError send doneCallback");
+        NSLog(@"NuanceSpeechPlugin.didReceiveRecognition send doneCallback");
         CDVPluginResult *doneResult;
         NSMutableDictionary *doneReturnDictionary;
         doneReturnDictionary = [self createReturnDictionary: RC_SUCCESS withText: @"Success"];
@@ -764,18 +780,16 @@ NSDate *TimerStart;
         [self.commandDelegate sendPluginResult:doneResult callbackId:doneCallbackID];
         doneCallbackID = nil;
     }
-    recognizerInstance = nil;
+    skTransaction = nil;
     
-    NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithError: Leaving method");
+    NSLog(@"NuanceSpeechPlugin.didReceiveRecognition: Leaving method");
 }
 
 #pragma mark -
-#pragma mark SKVocalizerDelegate methods
+#pragma mark SKAudioPlayerDelegate methods
 
-
-- (void)vocalizer:(SKVocalizer *)vocalizer willBeginSpeakingString:(NSString *)text {
-    
-    NSLog(@"NuanceSpeechPlugin.vocalizerWillBeginSpeakingString: Entered method.");
+- (void)audioPlayer:(SKAudioPlayer *)player willBeginPlaying:(SKAudio *)audio {
+    NSLog(@"NuanceSpeechPlugin.willBeginPlaying: Entered method.");
     isSpeaking = YES;
     
     NSString* msg = @"Speaking started";
@@ -793,18 +807,21 @@ NSDate *TimerStart;
     
     [self.commandDelegate sendPluginResult:result callbackId:ttsCallbackId];
     
-    NSLog(@"NuanceSpeechPlugin.vocalizerWillBeginSpeakingString: Leaving method");
+    NSLog(@"NuanceSpeechPlugin.willBeginPlaying: Leaving method");
     
 }
+/*
+ - (void)vocalizer:(SKVocalizer *)vocalizer willSpeakTextAtCharacter:(NSUInteger)index ofString:(NSString *)text {
+ NSLog(@"NuanceSpeechPlugin.vocalizerWillSpeakTextAtChar: Entered method.");
+ //textReadSoFar.text = [text substringToIndex:index];
+ }
+ */
 
-- (void)vocalizer:(SKVocalizer *)vocalizer willSpeakTextAtCharacter:(NSUInteger)index ofString:(NSString *)text {
-    NSLog(@"NuanceSpeechPlugin.vocalizerWillSpeakTextAtChar: Entered method.");
-    //textReadSoFar.text = [text substringToIndex:index];
-}
-
-- (void)vocalizer:(SKVocalizer *)vocalizer didFinishSpeakingString:(NSString *)text withError:(NSError *)error {
-    
-    NSLog(@"NuanceSpeechPlugin.vocalizerDidFinishSpeakingString: Finished Speaking: Session id [%@].", [SpeechKit sessionID]); // for debugging purpose: printing out the speechkit session id
+/*- (void)vocalizer:(SKVocalizer *)vocalizer didFinishSpeakingString:(NSString *)text withError:(NSError *)error {
+ */
+- (void)audioPlayer:(SKAudioPlayer *)player didFinishPlaying:(SKAudio *)audio {
+    //NSLog(@"NuanceSpeechPlugin.didFinishPlaying: Finished Speaking: Session id [%@].", [SpeechKit sessionID]);
+    // for debugging purpose: printing out the speechkit session id
     
     NSString* msg;
     
@@ -812,9 +829,10 @@ NSDate *TimerStart;
     NSMutableDictionary* returnDictionary;
     isSpeaking = NO;
     
-    if (error != nil){
-        NSLog(@"NuanceSpeechPlugin.vocalizerDidFinishSpeakingString: Error: [%@].", [error localizedDescription]);
-        returnDictionary = [self createReturnDictionary: RC_TTS_FAILURE withText: [error localizedDescription]];
+    //if (error != nil){
+    if (NO) {
+        //NSLog(@"NuanceSpeechPlugin.vocalizerDidFinishSpeakingString: Error: [%@].", [error localizedDescription]);
+        //returnDictionary = [self createReturnDictionary: RC_TTS_FAILURE withText: [error localizedDescription]];
         //[returnDictionary setObject:EVENT_TTS_ERROR forKey:KEY_EVENT];
     }
     else{
@@ -835,23 +853,22 @@ NSDate *TimerStart;
         ttsCallbackId = nil;
     }
     
-    NSLog(@"NuanceSpeechPlugin.vocalizerDidFinishSpeakingString: Entered method.");
+    NSLog(@"NuanceSpeechPlugin.didFinishPlaying: Leaving method.");
     
 }
 
+
 - (void) cancel:(CDVInvokedUrlCommand*)command{
     
-    if (recognizerInstance != nil) [recognizerInstance cancel];
-    
-    if (vocalizer != nil) [vocalizer cancel];
+    if (skTransaction != nil) [skTransaction cancel];
 }
 
 //TODO: Check
 - (void) cancel_tts:(CDVInvokedUrlCommand*)command{
-    if (vocalizer != nil) [vocalizer cancel];
+    if (skTransaction != nil) [skTransaction cancel];
 }
 - (void) cancel_asr:(CDVInvokedUrlCommand*)command{
-    if (recognizerInstance != nil) [recognizerInstance cancel];
+    if (skTransaction != nil) [skTransaction cancel];
 }
 
 //TODO: Check
@@ -862,7 +879,7 @@ NSDate *TimerStart;
     //isEnabled = FALSE; //PatTest
     isAudioLevelsRequested = isEnabled;
     
-    if(isAudioLevelsRequested && !isStopped && (recognizerInstance != nil) ){
+    if(isAudioLevelsRequested && !isStopped && (skTransaction != nil) ){
         [self performSelector:@selector(updateVUMeter) withObject:nil afterDelay:MIC_LEVEL_DELAY];
     }
     NSLog(@"NuanceSpeechPlugin.setMicLevelsListener: Leaving method.");

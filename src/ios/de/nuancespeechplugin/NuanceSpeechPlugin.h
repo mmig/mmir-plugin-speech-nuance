@@ -1,5 +1,4 @@
-//  NuanceSpeechPlugin.m
-
+//  NuanceSpeechPlugin.h
 
 #import <Cordova/CDV.h>
 #import <SpeechKit/SpeechKit.h>
@@ -101,8 +100,7 @@ const NSString* KEY_TTS_DETAILS = @"message";
 const NSString* KEY_TTS_ERROR_CODE = @"code";
 
 
-
-@interface NuanceSpeechPlugin : CDVPlugin <SpeechKitDelegate, SKVocalizerDelegate, SKRecognizerDelegate>{
+@interface NuanceSpeechPlugin : CDVPlugin <SKTransactionDelegate, SKAudioPlayerDelegate >{
     
     BOOL isSpeaking;
     BOOL isRecording;
@@ -111,14 +109,15 @@ const NSString* KEY_TTS_ERROR_CODE = @"code";
     NSString* recoCallbackId;
     NSString* ttsCallbackId;
     NSMutableArray *lastResultArray;
-    SKVocalizer* vocalizer;
-    SKRecognizer* recognizerInstance;
+    
+    SKSession* skSession;
+    SKTransaction* skTransaction;
     
 }
 
 
-@property(readonly)         SKVocalizer* vocalizer;
-@property(readonly)         SKRecognizer* recognizerInstance;
+@property(readonly)         SKSession* skSession;
+@property(readonly)         SKTransaction* skTransaction;
 
 // Initialize Speech Kit
 - (void) init:(CDVInvokedUrlCommand*)command;
@@ -131,7 +130,7 @@ const NSString* KEY_TTS_ERROR_CODE = @"code";
 - (void) start_rec:(CDVInvokedUrlCommand*)command;
 
 // Start speech recognition
-- (void) startRecognition:(CDVInvokedUrlCommand*)command withEosDetection:(SKEndOfSpeechDetection)detection;
+- (void) startRecognition:(CDVInvokedUrlCommand*)command withEosDetection:(SKTransactionEndOfSpeechDetection)detection;
 
 // Stop speech wrapper
 - (void) stop_rec:(CDVInvokedUrlCommand*)command;
