@@ -15,10 +15,23 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/*
 import com.nuance.nmdp.speechkit.Recognition;
 import com.nuance.nmdp.speechkit.Recognizer;
 import com.nuance.nmdp.speechkit.SpeechError;
 import com.nuance.nmdp.speechkit.Vocalizer;
+*/
+
+import com.nuance.speechkit.Audio;
+import com.nuance.speechkit.AudioPlayer;
+import com.nuance.speechkit.DetectionType;
+import com.nuance.speechkit.Language;
+import com.nuance.speechkit.Recognition;
+import com.nuance.speechkit.RecognitionType;
+import com.nuance.speechkit.Session;
+import com.nuance.speechkit.Transaction;
+import com.nuance.speechkit.TransactionException;
+
 
 import android.content.Context;
 import android.view.WindowManager;
@@ -512,12 +525,12 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 		return result;
 	}
 	
-	private Vocalizer.Listener createVocalizerHandler(final CallbackContext callbackContext){//String id){
+	private Transaction.Listener createVocalizerHandler(final CallbackContext callbackContext){//String id){
 		
-		return new Vocalizer.Listener() {
+		return new Transaction.Listener() {
 			@Override
-			public void onSpeakingBegin(Vocalizer vocalizer, String text, Object context) {
-				
+			//public void onSpeakingBegin(Vocalizer vocalizer, String text, Object context) {
+			public void onAudio(Transaction transaction, Audio audio){
 				String msg = "Speaking started";
 				JSONObject beginResult = createResultObj(SpeakResultTypes.TTS_BEGIN, msg, -1);
 				//TODO add utterance id/similar to result message?
@@ -533,13 +546,13 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 			}
 
 			@Override
-			public void onSpeakingDone(Vocalizer vocalizer, String text, SpeechError error, Object context) {
-				
+			//public void onSpeakingDone(Vocalizer vocalizer, String text, SpeechError error, Object context) {
+			public void onSuccess(Transaction transaction, String s)
 				String msg = "Speech finished.";
 				
 				PluginResult result = null;
 				
-				if(error != null){
+				/*if(error != null){
 					if(error.getErrorCode() == SpeechError.Codes.CanceledError){
 						
 						//do not treat CANCEL as error (just print message)
@@ -557,7 +570,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 
 						result = new PluginResult(PluginResult.Status.ERROR, createResultObj(SpeakResultTypes.TTS_ERROR, msg, error.getErrorCode()));
 					}
-				}
+				}*/
 				
 				if(result == null){
 					
@@ -599,7 +612,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         return new ExtendedRecognizerListener(callbackContext);
     }
 
-    class ExtendedRecognizerListener implements Recognizer.Listener {
+    class ExtendedRecognizerListener implements Transaction.Listener {
     	
         private static final String JS_PLUGIN_ID = "dfki-mmir-plugin-speech-nuance.nuanceSpeechPlugin";
 		private static final String HANDLER_NAME = "NuanceEngine";
@@ -608,7 +621,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 		private CallbackContext currentCallbackContext;
         private CallbackContext doneCallbackContext;
         
-        private Recognizer currentRecognizer;
+        private Transaction currentRecognizer;
         
         //for tracking recording state (i.e. when recording actually starts / stops)
         private boolean recording;
@@ -624,8 +637,8 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         }
 
         @Override
-        public void onRecordingBegin(Recognizer recognizer) {
-
+        //public void onRecordingBegin(Recognizer recognizer) {
+        public void onStartedRecording(Transaction transaction){
             //TODO add callback for start-recording/-recognizing event (+ JavaScript)
         	
         	if(isPreventPauseDuringRecognition){
@@ -710,7 +723,8 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 		}
         
         @Override
-        public void onRecordingDone(Recognizer recognizer) {
+        //public void onRecordingDone(Recognizer recognizer) {
+        public void onFinishedRecording(Transaction transaction) {
         	 
         	recording = false;
         	
@@ -745,7 +759,8 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         }
 
         @Override
-        public void onError(Recognizer recognizer, SpeechError error) {
+        //public void onError(Recognizer recognizer, SpeechError error) {
+        public void onError(Transaction transaction, String s, TransactionException e) {
 
         	recording = false;
 
@@ -762,17 +777,13 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         	// 4: VocalizerError,
         	// 5: CanceledError
         	String msg = String.format(Locale.getDefault(),
-        			"An error occurred during recognition (isFinal %s | isStopped %s), code %d (%s): %s",
-        			isFinal, isStopped,
-        			error.getErrorCode(),
-        			error.getErrorDetail(),
-        			error.getSuggestion()
-        			);
+        			"An error occurred during recognition (isFinal %s | isStopped %s), message %s : %s",
+        			isFinal, isStopped, e.getMessage(),	s);
 
         	LOG.e(HANDLER_NAME, msg);
 
         	try {
-        		errorAsJSON.put("error_code", error.getErrorCode());
+        		errorAsJSON.put("error_message", e.getMessage());
         		errorAsJSON.put("msg", msg);
         		errorAsJSON.put(RECOGNITION_RESULT_SUGGESTION_FIELD_NAME, error.getSuggestion());
         		if (isFinal || isStopped) {//isStopped: if error occurred, then onRecordingDone and onResults will not be called -> this is also the final callback-invocation
@@ -816,36 +827,65 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         }
 
         @Override
-        public void onResults(Recognizer recognizer, Recognition results) {
-
+        //public void onResults(Recognizer recognizer, Recognition results) {
+        public void onRecognition(Transaction transaction, Recognition recognition) {
             LOG.d(HANDLER_NAME, "Received recognition results");
 
             try {
 
                 JSONObject recognitionResult = new JSONObject();
 
-                int count = results.getResultCount();
+                //int count = results.getResultCount();
 
-                if (count > 0){
+                //if (count > 0){
+              
                     // generate "result", "score"
-                    recognitionResult.put(RECOGNITION_RESULT_FIELD_NAME, results.getResult(0).getText());
-                    recognitionResult.put(RECOGNITION_RESULT_SCORE_FIELD_NAME, results.getResult(0).getScore());
+                  //  recognitionResult.put(RECOGNITION_RESULT_FIELD_NAME, results.getResult(0).getText());
+                  // recognitionResult.put(RECOGNITION_RESULT_SCORE_FIELD_NAME, results.getResult(0).getScore());
                     // now generate alternative results
                     JSONArray alternativeResults = new JSONArray();
-                    for (int i = 1; i < count; i++) {
+                    
+                    List<RecognizedPhrase> nBest = recognition.getDetails();
+                if(!(nBest == null)){ 
+                    int i = 0;
+                    for(RecognizedPhrase phrase : nBest) {
+                    	if(i == 0){
+                    		String text = phrase.getText();
+                            double confidence = phrase.getConfidence();
+                            
+                            recognitionResult.put(RECOGNITION_RESULT_FIELD_NAME, text);
+                            recognitionResult.put(RECOGNITION_RESULT_SCORE_FIELD_NAME, confidence);
+                            i++;
+                            continue;
+                    	}
+                        String text = phrase.getText();
+                        double confidence = phrase.getConfidence();
+                        
+                        JSONObject tmpResult = new JSONObject();
+                        tmpResult.put(RECOGNITION_RESULT_FIELD_NAME, text);
+                        tmpResult.put(RECOGNITION_RESULT_SCORE_FIELD_NAME, confidence);
+                        alternativeResults.put(tmpResult);
+                        
+                        i++;
+                    }
+                    recognitionResult.put(ALTERNATIVE_RECOGNITION_RESULT_FIELD_NAME, alternativeResults);
+                    
+                    
+                   /* for (int i = 1; i < count; i++) {
                         JSONObject tmpResult = new JSONObject();
                         tmpResult.put(RECOGNITION_RESULT_FIELD_NAME, results.getResult(i).getText());
                         tmpResult.put(RECOGNITION_RESULT_SCORE_FIELD_NAME, results.getResult(i).getScore());
                         alternativeResults.put(tmpResult);
                     }
-                    recognitionResult.put(ALTERNATIVE_RECOGNITION_RESULT_FIELD_NAME, alternativeResults);
+                    recognitionResult.put(ALTERNATIVE_RECOGNITION_RESULT_FIELD_NAME, alternativeResults); */
                 }
 
                 // TODO: if there is a suggestion put that in result
-                String suggestion = results.getSuggestion();
+               /* String suggestion = results.getSuggestion();
                 if(suggestion != null && suggestion.length() > 0){
                     recognitionResult.put(RECOGNITION_RESULT_SUGGESTION_FIELD_NAME, suggestion);
                 }
+                */
 
                 if (isFinal){
 //                    LOG.d(HANDLER_NAME, "onResults - final.");
@@ -890,7 +930,8 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
                 LOG.d(HANDLER_NAME, "result: " + recognitionResult.toString());
 
             } catch (JSONException e) {
-                String msg = String.format("NuancePlugin: Error while waiting while setting result '%s' for recognizing... %s",results,e);
+               // String msg = String.format("NuancePlugin: Error while waiting while setting result '%s' for recognizing... %s",results,e);
+            	String msg = String.format("NuancePlugin: Error while waiting while setting result");
                 // send also error-code {
                 //  "error_code": errorcode,
                 //  "msg": msg
