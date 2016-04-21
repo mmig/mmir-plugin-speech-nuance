@@ -2,6 +2,7 @@ package de.dfki.iui.mmir.plugins.speech.nuance;
 
 import java.util.LinkedList;
 import java.util.Locale;
+import java.util.List;
 
 import org.apache.cordova.CordovaPreferences;
 import org.apache.cordova.CordovaWebView;
@@ -28,6 +29,10 @@ import com.nuance.speechkit.DetectionType;
 import com.nuance.speechkit.Language;
 import com.nuance.speechkit.Recognition;
 import com.nuance.speechkit.RecognitionType;
+import com.nuance.speechkit.RecognizedPhrase;
+import com.nuance.speechkit.RecognizedWord;
+
+
 import com.nuance.speechkit.Session;
 import com.nuance.speechkit.Transaction;
 import com.nuance.speechkit.TransactionException;
@@ -380,16 +385,16 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 	 */
 	private PluginResult recognize(JSONArray data,final CallbackContext callbackContext) {
 		
-		cordova.getThreadPool().execute(new Runnable() {
-            public void run() {
+		//cordova.getThreadPool().execute(new Runnable() {
+        //    public void run() {
                 isStopped = 	false;
                 isFinal = 		false;
                 isCancelled = 	false;
                 isRecordingMoreThanOnce = false;
                 recognizer = createRecognitionHandler(callbackContext);
                 NuanceEngine.getInstance().recognize(recognizer, false);
-            }
-        });
+        //    }
+        //});
 		
 		PluginResult returnValue = new PluginResult(Status.NO_RESULT);
 		returnValue.setKeepCallback(true);
@@ -547,7 +552,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 
 			@Override
 			//public void onSpeakingDone(Vocalizer vocalizer, String text, SpeechError error, Object context) {
-			public void onSuccess(Transaction transaction, String s)
+			public void onSuccess(Transaction transaction, String s){
 				String msg = "Speech finished.";
 				
 				PluginResult result = null;
@@ -612,7 +617,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         return new ExtendedRecognizerListener(callbackContext);
     }
 
-    class ExtendedRecognizerListener implements Transaction.Listener {
+    class ExtendedRecognizerListener extends Transaction.Listener { //implements Recognition.Listener {
     	
         private static final String JS_PLUGIN_ID = "dfki-mmir-plugin-speech-nuance.nuanceSpeechPlugin";
 		private static final String HANDLER_NAME = "NuanceEngine";
@@ -665,7 +670,8 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
             
             //remember recognizer 
             // (we need this instance, if we want to store the audio levels during recording)
-        	currentRecognizer = recognizer;
+        	//currentRecognizer = recognizer;
+            currentRecognizer = transaction;
         	//if audio levels were already requested, start storing them now:
         	if(isAudioLevelsRequested)
         		startStoringAudioLevels();
@@ -760,7 +766,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 
         @Override
         //public void onError(Recognizer recognizer, SpeechError error) {
-        public void onError(Transaction transaction, String s, TransactionException e) {
+        public void onError(Transaction transaction, String s, TransactionException error) {
 
         	recording = false;
 
@@ -778,14 +784,15 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         	// 5: CanceledError
         	String msg = String.format(Locale.getDefault(),
         			"An error occurred during recognition (isFinal %s | isStopped %s), message %s : %s",
-        			isFinal, isStopped, e.getMessage(),	s);
+        			isFinal, isStopped, error.getMessage(),	s);
 
         	LOG.e(HANDLER_NAME, msg);
 
         	try {
-        		errorAsJSON.put("error_message", e.getMessage());
+        		errorAsJSON.put("error_message", error.getMessage());
         		errorAsJSON.put("msg", msg);
-        		errorAsJSON.put(RECOGNITION_RESULT_SUGGESTION_FIELD_NAME, error.getSuggestion());
+        		//errorAsJSON.put(RECOGNITION_RESULT_SUGGESTION_FIELD_NAME, error.getSuggestion());
+        		errorAsJSON.put(RECOGNITION_RESULT_SUGGESTION_FIELD_NAME, error.getMessage());
         		if (isFinal || isStopped) {//isStopped: if error occurred, then onRecordingDone and onResults will not be called -> this is also the final callback-invocation
         			// mark this as last error
         			errorAsJSON.put(RECOGNITION_TYPE_FIELD_NAME, ResultTypes.FINAL.toString());
