@@ -26,7 +26,7 @@
 
 /**
  * part of Cordova plugin: dfki-mmir-plugin-speech-nuance
- * @version 0.12.5
+ * @version 0.12.6
  * @ignore
  */
 newMediaPlugin = {
