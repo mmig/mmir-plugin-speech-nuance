@@ -6,15 +6,6 @@ import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
 
-/* old speechkit v1.4
-import com.nuance.nmdp.speechkit.Prompt;
-import com.nuance.nmdp.speechkit.Recognition;
-import com.nuance.nmdp.speechkit.Recognizer;
-import com.nuance.nmdp.speechkit.SpeechError;
-import com.nuance.nmdp.speechkit.SpeechKit;
-import com.nuance.nmdp.speechkit.Vocalizer;
-*/
-
 import com.nuance.speechkit.Audio;
 import com.nuance.speechkit.AudioPlayer;
 import com.nuance.speechkit.DetectionType;
@@ -33,18 +24,12 @@ public class NuanceEngine {
 	private static final String PLUGIN_NAME 	 = "NuanceEngine";
 	private static final String PLUGIN_TTS_NAME	 = "NuanceEngine.Vocalizer.Listener";
 
-	//private SpeechKit _speechKit;
 	private Session _speechSession;
 
-	//private Vocalizer _vocalizer;
 	private Transaction _ttsTransaction;
 
-
-
-	//private Recognizer.Listener _recognitionListener;
 	private Transaction.Listener _asrTransactionListener;
 	private Handler _handler;
-	//private Recognizer _currentRecognizer;
 	private Transaction _currentAsrTransaction;
 	private String _currentLanguage = "eng-GBR";
 	private Transaction.Listener _currentRecognitionHandler;
@@ -94,7 +79,6 @@ public class NuanceEngine {
 	}
 
 	public boolean isInitializedResources() {
-		//return _speechKit != null;
 		return _speechSession != null;
 	}
 
@@ -105,22 +89,9 @@ public class NuanceEngine {
 		}
 		Log.d(PLUGIN_TTS_NAME, "start init resources...");
 
-		/*
-		_speechKit = SpeechKit.initialize(
-				_context,
-				Credentials.getSpeechKitAppId(),
-				Credentials.getSpeechKitServer(),
-				Credentials.getSpeechKitPort(),//the port number, e.g. 443,
-				Credentials.getSpeechKitSsl(),//true if SSL should be used,
-				Credentials.getSpeechKitCertSummary(),//the summary String (must match the Common Name (CN) of the used certificate-data; as provided by Nuance)
-				Credentials.getSpeechKitCertData(),//the certificate data,
-				Credentials.getSpeechKitAppKey()
-		);*/
-
-		//									maybe this
+		//PatBit	maybe this instead of _context but seems to work fine
 		_speechSession = Session.Factory.session(_context, Credentials.getServerUri(), Credentials.getAppKey());
 
-		//_speechKit.connect();
 
 		/* PatBit TODO Prompts
 		int beepResId = _context.getResources().getIdentifier("rawbeep", "raw", _context.getApplicationInfo().packageName);
@@ -155,16 +126,7 @@ public class NuanceEngine {
 			}
 		};*/
 
-
-
-		// Create a single Vocalizer here.
-		//_vocalizer = _speechKit.createVocalizerWithLanguage(_currentLanguage, vocalizerListener, new Handler());
-		/*TODO PatBit something amiss ?
-		 * change location of the listener to speak
-		*/
-		//_recognitionListener = createRecognitionListener();
 		_asrTransactionListener = createRecognitionListener();
-		//_handler = new Handler();
 	}
 	/* TODO PatBit Prompt
 	private Prompt createDefaultStartPrompt(){
@@ -194,7 +156,6 @@ public class NuanceEngine {
 	}
 	*/
 	public void releaseResources() {
-		//if(_speechKit != null){
 		if(_speechSession != null){
 
 			if(_currentRecognitionHandler != null){
@@ -219,25 +180,18 @@ public class NuanceEngine {
 				});*/
 
 				//TODO PatBit api change
-				//_currentRecognitionHandler.onError(_currentAsrTransaction, "simulated canceled", new RecognitionException("Simulated cancelded"));
+				_currentRecognitionHandler.onError(_currentAsrTransaction, "simulated canceled", new RecognitionException("Simulated cancelded"));
 
 
 			}
 
-			//_speechKit.release();
-
-			//_currentRecognizer = null;
 			_currentAsrTransaction = null;
 			_currentRecognitionHandler = null;
 
-			//_recognitionListener = null;
 			_asrTransactionListener = null;
 
-			//_vocalizer = null;
 			_ttsTransaction = null;
-			//_speechKit = null;
 			_speechSession = null;
-			//_handler = null;
 		}
 
 		/*TODO Patbit Prompt
@@ -281,7 +235,6 @@ public class NuanceEngine {
 			}
 
 			@Override
-			//public void onError(Recognizer recognizer, SpeechError error) {
 			public void onError(Transaction transaction, String suggestion, TransactionException e){
 				// 0: Unknown error,
 				// 1: ServerConnectionError,
@@ -289,8 +242,7 @@ public class NuanceEngine {
 				// 3: RecognizerError,
 				// 4: VocalizerError,
 				// 5: CanceledError
-//				System.out.printf("error: %s (%s)%n", error.getErrorCode(), error.getErrorDetail());
-				Log.e(PLUGIN_NAME, String.format("an error occurred, message %s (%s)",e.getMessage(), suggestion));
+				Log.e(PLUGIN_NAME, String.format("an error occurred, message %s (%s) toString: %s, getClass: %s",e.getMessage(), suggestion, e.toString(), e.getClass().toString()));
 
 				if(_currentRecognitionHandler != null){
 					_currentRecognitionHandler.onError(transaction, suggestion, e);
@@ -312,7 +264,6 @@ public class NuanceEngine {
 //					rs[i] = results.getResult(i);
 //				}
 				if(_currentRecognitionHandler != null){
-					//_currentRecognitionHandler.onResults(transaction, recognition);
 					_currentRecognitionHandler.onRecognition(transaction, recognition);
 
                     // DO NOT do that, or else the recognizer might be in an ambiguous state!!!
@@ -329,18 +280,45 @@ public class NuanceEngine {
 
 		Transaction.Options options = new Transaction.Options();
         options.setLanguage(new Language(_currentLanguage));
+        /*
+		@Override
+		public void onSpeakingBegin(Vocalizer vocalizer, String text, Object context) {
+			Log.d(PLUGIN_TTS_NAME, String.format("start speaking: '%s'",text));
 
+			if(context instanceof Vocalizer.Listener){
+				((Vocalizer.Listener)context).onSpeakingBegin(vocalizer, text, null);
+			}
+		}
+
+		@Override
+		public void onSpeakingDone(Vocalizer vocalizer, String text, SpeechError error, Object context) {
+			// Use the context to determine if this was the final TTS phrase
+			Log.d(PLUGIN_TTS_NAME, String.format("speaking done: '%s'",text));
+
+			if(context instanceof Vocalizer.Listener){
+				((Vocalizer.Listener)context).onSpeakingDone(vocalizer, text, error, null);
+			}
+		}
+        */
 		Transaction.Listener ttsTransactionListener = new Transaction.Listener() {
-		    public void onAudio(Transaction transaction, Audio audio) { return; /*TODO PatBit impl*/ }
-		    public void onSuccess(Transaction transaction, String s) { return;/*TODO PatBit impl*/ }
-		    public void onError(Transaction transaction, String s, TransactionException e) { return;/*TODO PatBit impl*/ }
+		    public void onAudio(Transaction transaction, Audio audio){
+		    	Log.d(PLUGIN_TTS_NAME, String.format("start speaking"));
+		    	
+		    }
+		    
+		    public void onSuccess(Transaction transaction, String s){
+		    	Log.d(PLUGIN_TTS_NAME, String.format("speaking done: '%s'",s));
+		    	
+		    }
+		    public void onError(Transaction transaction, String s, TransactionException e){
+		    	Log.d(PLUGIN_TTS_NAME, String.format("speaking error: '%s'",s));
+		    	
+		    }
 		};
 
 		if(isSsml)
-			//_vocalizer.speakMarkupString(text, context);
 			_ttsTransaction = _speechSession.speakMarkup(text, options, ttsTransactionListener);
 		else
-			//_vocalizer.speakString(text, context);
 			_ttsTransaction = _speechSession.speakString(text, options, ttsTransactionListener);
 	}
 
@@ -351,10 +329,8 @@ public class NuanceEngine {
 	public void recognize(Transaction.Listener callback, boolean shortPauseDetection, boolean suppressStartPrompt) {
 		//start recognition with EOS detection:
         if (shortPauseDetection){
-            //this.doRecognize(callback, Recognizer.EndOfSpeechDetection.Short, suppressStartPrompt);
             this.doRecognize(callback, DetectionType.Short, suppressStartPrompt);
         } else {
-            //this.doRecognize(callback, Recognizer.EndOfSpeechDetection.Long, suppressStartPrompt);
             this.doRecognize(callback, DetectionType.Long, suppressStartPrompt);
         }
 
@@ -362,7 +338,6 @@ public class NuanceEngine {
 
 	public void recognizeWithNoEndOfSpeechDetection(Transaction.Listener callback) {
 		//start recognition without EOS detection:
-        //this.doRecognize(callback, Recognizer.EndOfSpeechDetection.None);
 		this.doRecognize(callback, DetectionType.None);
     }
 
@@ -389,21 +364,11 @@ public class NuanceEngine {
 	private synchronized void doRecognize(final Transaction.Listener callback, DetectionType endOfSpeechRecognitionMode, boolean isNoStartPrompt , boolean isNoStopPrompt) {
 		//"singleton" recognition: only one recognition process at a time is allowed
 		//							--> ensure all previous processes are stopped.
-		//if(_currentRecognitionHandler != null && _currentRecognizer != null){
 		if(_currentAsrTransaction != null){
-			//_currentRecognizer.cancel();
 			_currentAsrTransaction.cancel();
 		}
 		_currentRecognitionHandler = callback;
 
-		/*
-		_currentRecognizer = _speechKit.createRecognizer(
-				Recognizer.RecognizerType.Dictation,
-                endOfSpeechRecognitionMode,
-				_currentLanguage,
-				_recognitionListener,
-				_handler
-		);*/
 
 		Transaction.Options options = new Transaction.Options();
 		options.setRecognitionType(RecognitionType.DICTATION);
@@ -422,8 +387,7 @@ public class NuanceEngine {
 		if(isNoStopPrompt){
 			_currentRecognizer.setPrompt(Recognizer.PromptType.RECORDING_STOP, null);
 		}
-
-		_currentRecognizer.start();*/
+		 */
 	}
 
 	public void stopRecording(final Transaction.Listener callback) {
@@ -472,8 +436,6 @@ public class NuanceEngine {
 	}
 
 	public void cancelRecognition() {
-		//if(_currentRecognizer != null)
-		//	_currentRecognizer.cancel();
 		if(_currentAsrTransaction != null)
 			_currentAsrTransaction.cancel();
 	}
