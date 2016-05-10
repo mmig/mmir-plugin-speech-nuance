@@ -16,12 +16,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-/*
-import com.nuance.nmdp.speechkit.Recognition;
-import com.nuance.nmdp.speechkit.Recognizer;
-import com.nuance.nmdp.speechkit.SpeechError;
-import com.nuance.nmdp.speechkit.Vocalizer;
-*/
 
 import com.nuance.speechkit.Audio;
 import com.nuance.speechkit.AudioPlayer;
@@ -105,7 +99,6 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         TTS_ERROR
     }
 
-    //    private Recognizer.Listener recognizer = null;
     private ExtendedRecognizerListener recognizer = null;
 
 	@Override
@@ -385,6 +378,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 	 */
 	private PluginResult recognize(JSONArray data,final CallbackContext callbackContext) {
 		
+		//NOTE: disabled because speechkit creates itself a new handle
 		//cordova.getThreadPool().execute(new Runnable() {
         //    public void run() {
                 isStopped = 	false;
@@ -533,8 +527,48 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 	private Transaction.Listener createVocalizerHandler(final CallbackContext callbackContext){//String id){
 		
 		return new Transaction.Listener() {
+			
 			@Override
-			//public void onSpeakingBegin(Vocalizer vocalizer, String text, Object context) {
+			public void onError(Transaction transaction, String s, TransactionException error) {
+				String msg = "Speech failed.";
+				
+	        	// 0: Unknown error,
+	        	// 1: ServerConnectionError,
+	        	// 2: ServerRetryError
+	        	// 3: RecognizerError,
+	        	// 4: VocalizerError,
+	        	// 5: CanceledError
+				
+				PluginResult result = null;
+				String eMessage = error.getMessage();
+				int errorcode = -1;
+				
+				if(eMessage.contains("retry")){
+					errorcode = 2;
+					LOG.e(PLUGIN_NAME, "retry error");
+				}
+				
+				if(eMessage.contains("connection")){
+					LOG.e(PLUGIN_NAME, "connection error");
+					errorcode = 1;
+				}
+
+				msg = String.format(Locale.getDefault(),
+                        "An error occurred during TTS, (%s): %s",
+                        s,
+                        error.getMessage());
+						result = new PluginResult(PluginResult.Status.ERROR, createResultObj(SpeakResultTypes.TTS_ERROR, msg, errorcode));
+					//}
+					
+				//TODO add utterance id/similar to result message?
+				
+				LOG.d(PLUGIN_NAME, msg);
+				
+				result.setKeepCallback(false);
+				callbackContext.sendPluginResult(result);
+			}
+			
+			@Override
 			public void onAudio(Transaction transaction, Audio audio){
 				String msg = "Speaking started";
 				JSONObject beginResult = createResultObj(SpeakResultTypes.TTS_BEGIN, msg, -1);
@@ -557,25 +591,6 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 				
 				PluginResult result = null;
 				
-				/*if(error != null){
-					if(error.getErrorCode() == SpeechError.Codes.CanceledError){
-						
-						//do not treat CANCEL as error (just print message)
-						LOG.i(PLUGIN_NAME, "speaking done: cancled");
-						
-					}
-					else {
-						
-						msg = String.format(Locale.getDefault(),
-		                        "An error occurred during TTS, code %d (%s): %s",
-		                        error.getErrorCode(),
-		                        error.getErrorDetail(),
-		                        error.getSuggestion()
-		                );
-
-						result = new PluginResult(PluginResult.Status.ERROR, createResultObj(SpeakResultTypes.TTS_ERROR, msg, error.getErrorCode()));
-					}
-				}*/
 				
 				if(result == null){
 					
@@ -642,7 +657,6 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         }
 
         @Override
-        //public void onRecordingBegin(Recognizer recognizer) {
         public void onStartedRecording(Transaction transaction){
             //TODO add callback for start-recording/-recognizing event (+ JavaScript)
         	
@@ -670,7 +684,6 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
             
             //remember recognizer 
             // (we need this instance, if we want to store the audio levels during recording)
-        	//currentRecognizer = recognizer;
             currentRecognizer = transaction;
         	//if audio levels were already requested, start storing them now:
         	if(isAudioLevelsRequested)
@@ -729,7 +742,6 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 		}
         
         @Override
-        //public void onRecordingDone(Recognizer recognizer) {
         public void onFinishedRecording(Transaction transaction) {
         	 
         	recording = false;
@@ -787,6 +799,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         			isFinal, isStopped, error.getMessage(),	s);
 
         	LOG.e(HANDLER_NAME, msg);
+        	
 
         	try {
         		errorAsJSON.put("error_message", error.getMessage());
@@ -834,25 +847,14 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         }
 
         @Override
-        //public void onResults(Recognizer recognizer, Recognition results) {
         public void onRecognition(Transaction transaction, Recognition recognition) {
             LOG.d(HANDLER_NAME, "Received recognition results");
 
             try {
 
                 JSONObject recognitionResult = new JSONObject();
-
-                //int count = results.getResultCount();
-
-                //if (count > 0){
-              
-                    // generate "result", "score"
-                  //  recognitionResult.put(RECOGNITION_RESULT_FIELD_NAME, results.getResult(0).getText());
-                  // recognitionResult.put(RECOGNITION_RESULT_SCORE_FIELD_NAME, results.getResult(0).getScore());
-                    // now generate alternative results
-                    JSONArray alternativeResults = new JSONArray();
-                    
-                    List<RecognizedPhrase> nBest = recognition.getDetails();
+                JSONArray alternativeResults = new JSONArray();
+                List<RecognizedPhrase> nBest = recognition.getDetails();
                 if(!(nBest == null)){ 
                     int i = 0;
                     for(RecognizedPhrase phrase : nBest) {
@@ -876,15 +878,6 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
                         i++;
                     }
                     recognitionResult.put(ALTERNATIVE_RECOGNITION_RESULT_FIELD_NAME, alternativeResults);
-                    
-                    
-                   /* for (int i = 1; i < count; i++) {
-                        JSONObject tmpResult = new JSONObject();
-                        tmpResult.put(RECOGNITION_RESULT_FIELD_NAME, results.getResult(i).getText());
-                        tmpResult.put(RECOGNITION_RESULT_SCORE_FIELD_NAME, results.getResult(i).getScore());
-                        alternativeResults.put(tmpResult);
-                    }
-                    recognitionResult.put(ALTERNATIVE_RECOGNITION_RESULT_FIELD_NAME, alternativeResults); */
                 }
 
                 // TODO: if there is a suggestion put that in result
