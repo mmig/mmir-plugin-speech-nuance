@@ -377,7 +377,7 @@ public class NuanceEngine {
 
 		Log.i(PLUGIN_NAME, "before recognize");
 		
-		Transaction transaction = _speechSession.recognize(options, _asrTransactionListener);
+		_currentAsrTransaction = _speechSession.recognize(options, _asrTransactionListener);
 
 		/*TODO PatBit Prompt
 		if(isNoStartPrompt){
