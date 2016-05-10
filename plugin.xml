@@ -22,14 +22,27 @@
         <engine name="cordova" version=">=5.0" />
     </engines>
     
-    <!-- preferences that MUST be set in Cordova's config.xml in the project's root directory -->
-    <preference name="nuanceAppId" default="NOT_SET" />
-    <preference name="nuanceAppKey" default="NOT_SET" />
-    <preference name="nuanceServerUrl" default="NOT_SET" />
-    <preference name="nuanceServerPort" default="443" />
-    <preference name="nuanceServerSsl" default="true" />
+    <!-- preferences that MAY be set in Cordova's config.xml in the project's root directory -->
+    <!-- 
+    	WARNING: you should use this only for development:
+    				the config.xml may be included as plain-text file in generated apps
+    				(e.g. on Android platform the config.xml and thus these credentials 
+    				 could be extracted from APK files)
+    			
+    			 Instead you sould edit the Credentials files (e.g. Credentials.java, Credentials.m, ...)
+    			 on each platform and implement appropriate getters/setters for the platforms that hide 
+    			 the credentials
+    			 NOTE simply hard-coding the values in the Credentials files may not be sufficient for
+    			      hiding the credentials
+    			      
+     -->
+    <!--preference name="nuanceAppId" default="NOT_SET" /-->
+    <!--preference name="nuanceAppKey" default="NOT_SET" /-->
+    <!--preference name="nuanceServerUrl" default="NOT_SET" /-->
+    <!--preference name="nuanceServerPort" default="443" /-->
+    <!--preference name="nuanceServerSsl" default="true" /-->
     
-    <!-- optional preferences that SHOULD be set in Cordova's config.xml
+    <!-- optional preferences that MAY be set in Cordova's config.xml
          in the project's root directory
          
          (NOTE these are disabled and included here only for documentation)
