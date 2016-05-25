@@ -443,8 +443,8 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 			final boolean doSuppressStartPrompt = isSuppressStartPrompt;
 			final boolean doUseShortPauseDetection = isShortPauseDetection;
 			
-			cordova.getThreadPool().execute(new Runnable() {
-				public void run() {
+		//	cordova.getThreadPool().execute(new Runnable() {
+		//		public void run() {
                     recognizer = 	createRecognitionHandler(callbackContext);
                     isStopped = 	false;
                     isFinal = 		false;
@@ -455,13 +455,13 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
                     //     ... and restart recognition after each result (until stopRecording is triggered)
                     //NOTE restarting is handled by JavaScript side...
 					NuanceEngine.getInstance().recognize(recognizer, doUseShortPauseDetection, doSuppressStartPrompt);
-				}
-			});
+		//		}
+		//	});
 			
 		} else {
 			
-			cordova.getThreadPool().execute(new Runnable() {
-				public void run() {
+		//	cordova.getThreadPool().execute(new Runnable() {
+		//		public void run() {
                     recognizer = 	createRecognitionHandler(callbackContext);
                     isStopped = 	false;
                     isFinal = 		false;
@@ -470,8 +470,8 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 
                     //use "real" non-EOS mode:
 					NuanceEngine.getInstance().recognizeWithNoEndOfSpeechDetection(recognizer);
-				}
-			});
+		//		}
+		//	});
 		}
 		
 		LOG.d(PLUGIN_NAME, "Recoginition (with no End Of Speech Detection) started."); 
