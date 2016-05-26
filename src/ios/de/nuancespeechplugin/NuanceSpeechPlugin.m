@@ -10,7 +10,7 @@
 
 
 @implementation NuanceSpeechPlugin
-@synthesize skSession, skTransaction;
+@synthesize skSession, asrTransaction, ttsTransaction;
 
 NSDate *TimerStart;
 
@@ -59,7 +59,6 @@ NSDate *TimerStart;
     
     // Create a session
     skSession = [[SKSession alloc] initWithURL:[NSURL URLWithString:creds.serverUrl] appToken:creds.appKey];
-    NSLog(@"appKey [%@]", creds.appKey);
     
     if (!skSession) {
         NSLog(@"Speechkit was not initialised");
@@ -120,8 +119,8 @@ NSDate *TimerStart;
         lastResultArray = nil;
     }
     
-    if (skTransaction != nil){
-        [skTransaction cancel];
+    if (asrTransaction != nil){
+        [asrTransaction cancel];
     }
     
     // destroy speech kit
@@ -220,14 +219,14 @@ NSDate *TimerStart;
              
              NSLog(@"NuanceSpeechPlugin.startRecognition: Recognition model set to [%@].", recognitionModel);
              */
-            if (skTransaction != nil) {
-                [skTransaction cancel];
-                skTransaction = nil;
+            if (asrTransaction != nil) {
+                [asrTransaction cancel];
+                asrTransaction = nil;
                 NSLog(@"NuanceSpeechPlugin.startRecognition: Canceled.");
             }
             TICK;
             
-            skTransaction = [skSession recognizeWithType:SKTransactionSpeechTypeDictation
+            asrTransaction = [skSession recognizeWithType:SKTransactionSpeechTypeDictation
                                                detection:SKTransactionEndOfSpeechDetectionShort
                                                 language:@"eng-USA"
                                                 delegate:self];
@@ -288,7 +287,7 @@ NSDate *TimerStart;
     //Pattest doneCallbackID = [callbackId mutableCopy];
     
     CDVPluginResult *result;
-    [skTransaction stopRecording];
+    [asrTransaction stopRecording];
     
     
     //sende plugin-result erst wenn 1. mic zu recDidFinishRecording 2. letztes result durch
@@ -415,8 +414,8 @@ NSDate *TimerStart;
         NSLog(@"NuanceSpeechPlugin.startTTS: Text = [%@] Lang = [%@] Voice = [%@] isSSML [%@].", text, lang, voice, isSSMLstr);
         
         
-        if (skTransaction != nil){
-            skTransaction = nil;
+        if (asrTransaction != nil){
+            asrTransaction = nil;
         }
         
         if (text != nil){
@@ -440,14 +439,14 @@ NSDate *TimerStart;
                 
                 if (isSSML) {
                     NSLog(@"NuanceSpeechPlugin.startTTS: About to speak text (with SSML).");
-                    [skSession speakMarkup:text
-                              withLanguage:lang
-                                  delegate:self];
+                    ttsTransaction = [skSession speakMarkup:text
+                                               withLanguage:lang
+                                                   delegate:self];
                 } else {
                     NSLog(@"NuanceSpeechPlugin.startTTS: About to speak text.");
-                    [skSession speakString:text
-                              withLanguage:lang
-                                  delegate:self];
+                    ttsTransaction = [skSession speakString:text
+                                               withLanguage:lang
+                                                   delegate:self];
                 }
                 
                 
@@ -492,8 +491,8 @@ NSDate *TimerStart;
     NSMutableDictionary* returnDictionary;
     
     
-    if (skTransaction != nil){
-        [skTransaction cancel];
+    if (asrTransaction != nil){
+        [asrTransaction cancel];
     }
     
     returnDictionary = [self createReturnDictionary: RC_SUCCESS withText: @"Success"];
@@ -509,9 +508,9 @@ NSDate *TimerStart;
 
 - (void)updateVUMeter {
     NSLog(@"NuanceSpeechPlugin.updateVUMeter: Entering method.");
-    if ((skTransaction != nil) && (isRecording == true)){
+    if ((asrTransaction != nil) && (isRecording == true)){
         
-        float f_volume = [skTransaction audioLevel];
+        float f_volume = [asrTransaction audioLevel];
         f_volume += 90.0;
         NSString *str_volume = [NSString stringWithFormat:@"%f", f_volume];
         NSLog(@"NuanceSpeechPlugin.updateVUMeter: volumeStr [%@].", str_volume);
@@ -714,19 +713,14 @@ NSDate *TimerStart;
         doneCallbackID = nil;
     }
     
-    skTransaction = nil;
+    asrTransaction = nil;
     NSLog(@"NuanceSpeechPlugin.didReceiveRecognition: Leaving method");
     
 }
 
-- (void)transaction:(SKTransaction *)transaction didFailWithError:(NSError *)error suggestion:(NSString *)suggestion
-{
+- (void)handelAsrError:(SKTransaction *)transaction withError:error withSuggestion:(NSString *)suggestion{
+    NSLog(@"NuanceSpeechPlugin.handleAsrError: Entering method .");
     
-    
-    NSLog(@"NuanceSpeechPlugin.didReceiveRecognition: Entered method. Got error. [%@]", recoCallbackId);
-    /*
-     NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithError: Session id [%@].", [SpeechKit sessionID]); // for debugging purpose: printing out the speechkit session id
-     */
     isRecording = false;
     
     NSString *isFinalStr = isFinal ? @"YES" : @"NO";
@@ -780,9 +774,55 @@ NSDate *TimerStart;
         [self.commandDelegate sendPluginResult:doneResult callbackId:doneCallbackID];
         doneCallbackID = nil;
     }
-    skTransaction = nil;
+    asrTransaction = nil;
+
+    NSLog(@"NuanceSpeechPlugin.handleAsrError: Leaving method.");
+}
+
+- (void)handelTtsError:(SKTransaction *)transaction withError:error withSuggestion:(NSString *)suggestion{
+    NSLog(@"NuanceSpeechPlugin.handleTtsError: Entering method .");
     
-    NSLog(@"NuanceSpeechPlugin.didReceiveRecognition: Leaving method");
+    NSNumber* error_code  = [NSNumber numberWithLong:([error code])];
+    
+    CDVPluginResult *result;
+    NSMutableDictionary* returnDictionary;
+    
+    
+    NSLog(@"NuanceSpeechPlugin.vocalizerDidFinishSpeakingString: Error: [%@].", [error localizedDescription]);
+    returnDictionary = [self createReturnDictionary: RC_TTS_FAILURE withText: [error localizedDescription]];
+    
+    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:returnDictionary];
+    [result setKeepCallbackAsBool:NO];
+    
+    [self.commandDelegate sendPluginResult:result callbackId:ttsCallbackId];
+    
+    if (ttsCallbackId != nil){
+        ttsCallbackId = nil;
+    }
+    
+    
+    NSLog(@"NuanceSpeechPlugin.handleTtsError: Leaving method.");
+}
+
+
+- (void)transaction:(SKTransaction *)transaction didFailWithError:(NSError *)error suggestion:(NSString *)suggestion
+{
+    
+    NSLog(@"NuanceSpeechPlugin.didFailWithError: Entered method. Got error. [%@]", recoCallbackId);
+    
+    if ([transaction isEqual:asrTransaction] ) {
+        [self handelAsrError:transaction withError:error withSuggestion:suggestion];
+    }
+    
+    if ([transaction isEqual:ttsTransaction] ) {
+        [self handelTtsError:transaction withError:error withSuggestion:suggestion];
+    }
+    
+    /*
+     NSLog(@"NuanceSpeechPlugin.recognizerDidFinishWithError: Session id [%@].", [SpeechKit sessionID]); // for debugging purpose: printing out the speechkit session id
+     */
+    
+    NSLog(@"NuanceSpeechPlugin.didFailWithError: Leaving method");
 }
 
 #pragma mark -
@@ -860,15 +900,15 @@ NSDate *TimerStart;
 
 - (void) cancel:(CDVInvokedUrlCommand*)command{
     
-    if (skTransaction != nil) [skTransaction cancel];
+    if (asrTransaction != nil) [asrTransaction cancel];
 }
 
 //TODO: Check
 - (void) cancel_tts:(CDVInvokedUrlCommand*)command{
-    if (skTransaction != nil) [skTransaction cancel];
+    if (asrTransaction != nil) [asrTransaction cancel];
 }
 - (void) cancel_asr:(CDVInvokedUrlCommand*)command{
-    if (skTransaction != nil) [skTransaction cancel];
+    if (asrTransaction != nil) [asrTransaction cancel];
 }
 
 //TODO: Check
@@ -879,7 +919,7 @@ NSDate *TimerStart;
     //isEnabled = FALSE; //PatTest
     isAudioLevelsRequested = isEnabled;
     
-    if(isAudioLevelsRequested && !isStopped && (skTransaction != nil) ){
+    if(isAudioLevelsRequested && !isStopped && (asrTransaction != nil) ){
         [self performSelector:@selector(updateVUMeter) withObject:nil afterDelay:MIC_LEVEL_DELAY];
     }
     NSLog(@"NuanceSpeechPlugin.setMicLevelsListener: Leaving method.");

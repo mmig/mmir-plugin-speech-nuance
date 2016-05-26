@@ -19,7 +19,7 @@ NSString* SKSNLUContextTag = @"!NLU_CONTEXT_TAG!";
 - (id)initWithSettings:(NSDictionary*)settings{
     self = [super init];
     
-    self.serverHost = [settings objectForKey:[@"nuanceServerHost" lowercaseString]];
+    self.serverHost = [settings objectForKey:[@"nuanceServerUrl" lowercaseString]];
     self.serverPort = [settings objectForKey:[@"nuanceServerPort" lowercaseString]];
     self.appId = [settings objectForKey:[@"nuanceAppId" lowercaseString]];
     self.appKey = [settings objectForKey:[@"nuanceAppKey" lowercaseString]];
