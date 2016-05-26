@@ -443,8 +443,8 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 			final boolean doSuppressStartPrompt = isSuppressStartPrompt;
 			final boolean doUseShortPauseDetection = isShortPauseDetection;
 			
-//			cordova.getThreadPool().execute(new Runnable() {
-//				public void run() {
+		//	cordova.getThreadPool().execute(new Runnable() {
+		//		public void run() {
                     recognizer = 	createRecognitionHandler(callbackContext);
                     isStopped = 	false;
                     isFinal = 		false;
@@ -455,13 +455,13 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
                     //     ... and restart recognition after each result (until stopRecording is triggered)
                     //NOTE restarting is handled by JavaScript side...
 					NuanceEngine.getInstance().recognize(recognizer, doUseShortPauseDetection, doSuppressStartPrompt);
-//				}
-//			});
+		//		}
+		//	});
 			
 		} else {
 			
-//			cordova.getThreadPool().execute(new Runnable() {
-//				public void run() {
+		//	cordova.getThreadPool().execute(new Runnable() {
+		//		public void run() {
                     recognizer = 	createRecognitionHandler(callbackContext);
                     isStopped = 	false;
                     isFinal = 		false;
@@ -470,8 +470,8 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 
                     //use "real" non-EOS mode:
 					NuanceEngine.getInstance().recognizeWithNoEndOfSpeechDetection(recognizer);
-//				}
-//			});
+		//		}
+		//	});
 		}
 		
 		LOG.d(PLUGIN_NAME, "Recoginition (with no End Of Speech Detection) started."); 
@@ -508,6 +508,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
             } else {
             	//this should actually never happen...
                 NuanceEngine.getInstance().stopRecording(createRecognitionHandler(callbackContext));
+                LOG.w(PLUGIN_NAME, "this branch shut not be called");
             }
 
 			result = new PluginResult(Status.NO_RESULT);
@@ -545,16 +546,22 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 				
 				if(eMessage.contains("retry")){
 					errorcode = 2;
-					LOG.e(PLUGIN_NAME, "retry error");
+					LOG.i(PLUGIN_NAME, "retry error tts parsed");
 				}
 				
 				if(eMessage.contains("connection")){
-					LOG.e(PLUGIN_NAME, "connection error");
 					errorcode = 1;
+					LOG.e(PLUGIN_NAME, "connection error tts parsed");
+				}
+				
+				if(eMessage.contains("canceled")){
+					errorcode = 5;
+					LOG.e(PLUGIN_NAME, "canceled error asr parsed");
 				}
 
 				msg = String.format(Locale.getDefault(),
-                        "An error occurred during TTS, (%s): %s",
+                        "An error occurred during TTS with id, (%s): %s",
+                        transaction.getSessionID(),
                         s,
                         error.getMessage());
 						result = new PluginResult(PluginResult.Status.ERROR, createResultObj(SpeakResultTypes.TTS_ERROR, msg, errorcode));
@@ -570,7 +577,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 			
 			@Override
 			public void onAudio(Transaction transaction, Audio audio){
-				String msg = "Speaking started";
+				String msg = "Speaking started for id: "  + transaction.getSessionID();
 				JSONObject beginResult = createResultObj(SpeakResultTypes.TTS_BEGIN, msg, -1);
 				//TODO add utterance id/similar to result message?
 				PluginResult result = null;
@@ -587,7 +594,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 			@Override
 			//public void onSpeakingDone(Vocalizer vocalizer, String text, SpeechError error, Object context) {
 			public void onSuccess(Transaction transaction, String s){
-				String msg = "Speech finished.";
+				String msg = "Speech finished for id: " + transaction.getSessionID();
 				
 				PluginResult result = null;
 				
@@ -777,7 +784,6 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         }
 
         @Override
-        //public void onError(Recognizer recognizer, SpeechError error) {
         public void onError(Transaction transaction, String s, TransactionException error) {
 
         	recording = false;
@@ -794,14 +800,42 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         	// 3: RecognizerError,
         	// 4: VocalizerError,
         	// 5: CanceledError
+			String eMessage = error.getMessage();
+			int errorcode = -1;
+			
+			if(eMessage.contains("retry")){
+				errorcode = 2;
+				LOG.i(PLUGIN_NAME, "retry error asr parsed");
+			}
+			
+			if(eMessage.contains("connection")){
+				errorcode = 1;
+				LOG.e(PLUGIN_NAME, "connection error asr parsed");
+			}
+			
+			if(eMessage.contains("canceled")){
+				errorcode = 5;
+				LOG.e(PLUGIN_NAME, "canceled error asr parsed");
+			}
+        	
+        	
+        	
         	String msg = String.format(Locale.getDefault(),
         			"An error occurred during recognition (isFinal %s | isStopped %s), message %s : %s",
         			isFinal, isStopped, error.getMessage(),	s);
 
         	LOG.e(HANDLER_NAME, msg);
         	
+        	
+        	String msgExceptiontype = String.format(Locale.getDefault(),
+        			"Class of exception: %s",
+        			(error.getClass()).toString());
+        	
+        	LOG.e(HANDLER_NAME, msgExceptiontype);
+        	
 
         	try {
+        		errorAsJSON.put("error_code", errorcode);
         		errorAsJSON.put("error_message", error.getMessage());
         		errorAsJSON.put("msg", msg);
         		//errorAsJSON.put(RECOGNITION_RESULT_SUGGESTION_FIELD_NAME, error.getSuggestion());
