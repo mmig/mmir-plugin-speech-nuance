@@ -76,7 +76,20 @@ the plugin's `/res` directories.
     ...
 
 
-Then edit the Cordova `config.xml` in the project's root directory and add your credentials (the example below
+### Credentials via config.xml - FOR DEVELOPMENT ONLY
+
+During development you can use the Credentials helper class for supplying the credentials via Cordova's `config.xml`. 
+**NOTE** that for production you should use appropriate mechanisms/implementations for securing the credentials
+within the generated platform-specific app files. Your should not put your credentials in the `config.xml`
+when publishing you app, since this file might be readable/extractable as plain-text in the generated app file,
+depending on the target platform (e.g. for Android you could use ProGuard for obfuscation or use the 
+Android NDK and put your credentials in a native library in order to increase the barrier
+for reverse-engineering).
+
+
+#### Using the Credentials Class and config.xml (FOR DEVELOPMENT)
+
+Edit the Cordova `config.xml` in the project's root directory and add your credentials (the example below
 only contains "mock" data and will not work):
 ```xml
 <?xml version='1.0' encoding='utf-8'?>
