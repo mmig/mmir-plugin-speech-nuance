@@ -84,14 +84,14 @@ public class Credentials {
 		this.certSummary 	= prefs.getString(NUANCE_CERT_SUMMARY, null);
 		this.certData		= prefs.getString(NUANCE_CERT_DATA, null);
 		this.appId 			= prefs.getString(NUANCE_APP_ID, null);
-		this.appKey 		= prefs.getString(NUANCE_APP_KEY, null); //parseToByteArray(prefs.getString(NUANCE_APP_KEY, null));
+		this.appKey 		= parseKey(prefs.getString(NUANCE_APP_KEY, null));
 		this.serverUri		= Uri.parse("nmsps://" + this.appId + "@" + this.serverUrl + ":" + this.port);
 		
 		Log.d(PLUGIN_NAME,"Credentials created ...");
 		
 		RuntimeException ex = verify(prefs);
 		if(ex != null){
-			throw ex;
+			throw ex;//TODO add mechanism, so that erroneous credentials will be signald in NuanceEngine/Plugin (e.g. store error-message and query Credentials for the error before trying to access Nuance service)
 		}
 	}
 
@@ -130,6 +130,7 @@ public class Credentials {
 	public static boolean isInitialized(){
 		return isInit;
 	}
+	
 /*	
 	public static String getSpeechKitServer() {
 		return instance.serverUrl;
@@ -151,6 +152,7 @@ public class Credentials {
 		return instance.appKey;
 	}
 */
+	
 	public static String getSpeechKitCertSummary() {
 		return instance.certSummary;
 	}
@@ -173,36 +175,44 @@ public class Credentials {
 	}
 
 	/**
-	 * HELPER convert the "stringified" byte Array into a typed Array
+	 * HELPER convert a "stringified" byte Array into a simple HEX string
 	 * 
 	 * Expects a String in the following format (whitespaces are ignored):
 	 * <code>{ (byte)0x93, (byte)0x1e, (byte)0xf6, ... }</code>
+	 * or
+	 * <code>0x93, 0x1e, 0xf6, ... </code>
+	 * 
+	 * and returns a string like
+	 * <code>931ef6...</code>
+	 * 
+	 * NOTE if input string does not contain any commas, then it will not be
+	 *      processed but returned as-is.
 	 * 
 	 */
-	private static byte[] parseToByteArray(String str){
+	private static String parseKey(String str){
 		
-		if(str != null && str.length() > 0){
+		if(str != null && str.length() > 0 && str.contains(",")){
 			
 			//remove encapsulating brackets { ... }:
 			str = str.replaceFirst("^\\s*\\{", "").replaceFirst("\\}\\s*$", "").trim();
 			
 			//split into individual values:
 			String[] bytes = str.split(",\\s*");
-			byte[] byteArray = new byte[bytes.length];
-			int i = 0;
 			//pattern for extracting the "raw" HEX value
-			Pattern reByte = Pattern.compile("\\(byte\\)\\s*0x");
+			Pattern reByte = Pattern.compile("(\\(byte\\))?\\s*0x");
+
+			StringBuilder sb = new StringBuilder();
 			for(String val : bytes){
 				
 				Matcher mByte = reByte.matcher(val);
-				//extract HEX value from String an convert to byte value:
-				byteArray[i++] = (byte) Integer.parseInt(mByte.replaceAll("").trim(), 16);
+				//extract HEX value from String and append to result-string:
+				sb.append(mByte.replaceAll("").trim());
 			}
 			
-			return byteArray;
+			return sb.toString();
 		}
 		
-		return null;
+		return str;
 	}
 	
 }
