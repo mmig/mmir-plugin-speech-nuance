@@ -156,11 +156,16 @@
             </feature>
         </config-file>
         
-        <header-file src="src/ios/de/nuancespeechplugin/Credentials.h" />
+       <!-- 
+       	<header-file src="src/ios/de/nuancespeechplugin/Credentials.h" />
         <source-file src="src/ios/de/nuancespeechplugin/Credentials.m"/>
         
         <header-file src="src/ios/de/nuancespeechplugin/NuanceSpeechPlugin.h" />
         <source-file src="src/ios/de/nuancespeechplugin/NuanceSpeechPlugin.m" />
+        -->
+        
+        <source-file src="src/ios/de/nuancespeechplugin/Credentials.swift"/>
+        <source-file src="src/ios/de/nuancespeechplugin/NuanceSpeechPlugin.swift" />
         
         <!-- Nucance libraries:
          		
@@ -178,4 +183,5 @@
 
     </platform>
     
+    <!-- <dependency id="cordova-plugin-add-swift-support" url="https://github.com/akofman/cordova-plugin-add-swift-support"/> -->
 </plugin>
