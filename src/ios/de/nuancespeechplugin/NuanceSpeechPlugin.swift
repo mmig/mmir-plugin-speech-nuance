@@ -211,9 +211,12 @@ import SpeechKit
  */
     func asr(command: CDVInvokedUrlCommand) {
         NSLog("NuanceSpeechPlugin.asr: Entering method .")
+
+    
         self.commandDelegate.runInBackground({
             self.startRecognition(command, withEosDetection: UInt(SKTransactionEndOfSpeechDetectionLong))
         })
+    
         NSLog("NuanceSpeechPlugin.asr: Leaving method.")
     }
 
@@ -231,9 +234,38 @@ import SpeechKit
 
     func start_rec(command: CDVInvokedUrlCommand) {
         NSLog("NuanceSpeechPlugin.start_rec: Entering method .")
-        self.commandDelegate.runInBackground({
-            self.startRecognition(command, withEosDetection: UInt(SKTransactionEndOfSpeechDetectionNone))
-        })
+        
+        let numArgs = command.arguments.count
+        var intermediateResult = false
+        var useLongPause = false
+        
+        
+        if numArgs >= 2 {
+            intermediateResult = command.argumentAtIndex(1) as! Bool
+            
+            if numArgs >= 3 {
+                useLongPause = command.argumentAtIndex(2) as! Bool
+            }
+        }
+        
+        if intermediateResult {
+            
+            if useLongPause {
+                self.commandDelegate.runInBackground({
+                    self.startRecognition(command, withEosDetection: UInt(SKTransactionEndOfSpeechDetectionLong))
+                })
+            }else{
+                self.commandDelegate.runInBackground({
+                    self.startRecognition(command, withEosDetection: UInt(SKTransactionEndOfSpeechDetectionShort))
+                })
+            }
+        }else{
+            
+            self.commandDelegate.runInBackground({
+                self.startRecognition(command, withEosDetection: UInt(SKTransactionEndOfSpeechDetectionNone))
+            })
+            
+        }
         NSLog("NuanceSpeechPlugin.start_rec: Leaving method.")
     }
 
@@ -255,12 +287,10 @@ import SpeechKit
         if isInitialized == true {
             let numArgs: Int = command.arguments.count
             if numArgs >= 1 {
-                var recoType: String = "dictation"
+                let recoType: String = "dictation"
                 NSLog("NuanceSpeechPlugin.startRecognition: Reco type [%@].", recoType)
                 let lang: String = command.argumentAtIndex(0) as! String //"de_DE"
-                if numArgs >= 2 {
-                 recoType = command.argumentAtIndex(1) as! String
-                }
+                
                 //fix micspeech no language
                 NSLog("NuanceSpeechPlugin.startRecognition: Language [%@].", lang)
                 lastResultArray = nil
@@ -575,7 +605,7 @@ import SpeechKit
                 let returnDictionary : NSMutableDictionary = [Const.KEY_RETURN_CODE : Const.RC_SUCCESS, Const.KEY_RETURN_TEXT : "Succes", Const.KEY_SCORE : -1, Const.KEY_ASR_TYPE : Const.ASR_TYPE_RECORDING_DONE]
                 
                 
-                var result = CDVPluginResult(status: CDVCommandStatus_OK, messageAsDictionary: returnDictionary as [NSObject : AnyObject])
+                let result = CDVPluginResult(status: CDVCommandStatus_OK, messageAsDictionary: returnDictionary as [NSObject : AnyObject])
                 result.setKeepCallbackAsBool(true)
                 self.commandDelegate.sendPluginResult(result, callbackId: asrCallbackId)
                 // Pattest
