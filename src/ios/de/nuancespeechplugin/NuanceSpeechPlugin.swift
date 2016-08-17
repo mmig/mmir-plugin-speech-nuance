@@ -151,10 +151,15 @@ import SpeechKit
         NSLog("NuanceSpeechPlugin.initHelper: port [%@].", portStr)
         // Create a session
         skSession = SKSession(URL: NSURL(string: creds.serverUrl)!, appToken: creds.appKey)
-        if (skSession == nil) {
+        
+        if let session = skSession {
+            session.audioPlayer.delegate = self
+            isInitialized = true
+        }else{
             NSLog("Speechkit was not initialised")
         }
-        isInitialized = true
+        
+        
         NSLog("NuanceSpeechPlugin.initHelper: Leaving method.")
     }
 
@@ -524,14 +529,14 @@ import SpeechKit
 		}
 
         func updateVUMeter() {
-            NSLog("NuanceSpeechPlugin.updateVUMeter: Entering method.")
+            //NSLog("NuanceSpeechPlugin.updateVUMeter: Entering method.")
             if (asrTransaction != nil) && (isRecording == true) {
                 let f_volume: Float = asrTransaction!.audioLevel
                 //f_volume += 90.0
 
                 let str_volume: String = "\(f_volume)"
-                NSLog("NuanceSpeechPlugin.updateVUMeter: volumeStr [%@].", str_volume)
-                NSLog("NuanceSpeechPlugin.updateVUMeter: value [%f].", f_volume)
+                //NSLog("NuanceSpeechPlugin.updateVUMeter: volumeStr [%@].", str_volume)
+                //NSLog("NuanceSpeechPlugin.updateVUMeter: value [%f].", f_volume)
                 let jsCallStr = "cordova.require(\'" + Const.JS_PLUGIN_ID + "\').fireMicLevelChanged(" + str_volume + ");"
                 // NSLog("NuanceSpeechPlugin.updateVUMeter: jscall [%@].", jsCallStr)
                 
@@ -543,7 +548,7 @@ import SpeechKit
                     //self.webView.evaluateJavaScript(jsCallStr)//later when we use the wkWebView
                 }
             }
-             NSLog("NuanceSpeechPlugin.updateVUMeter: Leaving method.")
+             //NSLog("NuanceSpeechPlugin.updateVUMeter: Leaving method.")
         }
             
 
@@ -816,19 +821,25 @@ import SpeechKit
             if let trans = self.asrTransaction {
                 trans.cancel()
             }
+            NSLog("NuanceSpeechPlugin.cancel(all): Leaving method.")
         }
         //TODO: Check
             
         func cancel_tts(command: CDVInvokedUrlCommand) {
-            if let trans = self.asrTransaction {
+            if let trans = self.ttsTransaction {
                 trans.cancel()
             }
+            if let session = skSession{
+                session.audioPlayer.stop()
+            }
+            NSLog("NuanceSpeechPlugin.cancel_tts: Leaving method.")
         }
             
         func cancel_asr(command: CDVInvokedUrlCommand) {
             if let trans = self.asrTransaction  {
                 trans.cancel()
             }
+            NSLog("NuanceSpeechPlugin.cancel_asr: Leaving method.")
         }
         //TODO: Check
             
