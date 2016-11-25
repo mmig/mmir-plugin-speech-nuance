@@ -93,6 +93,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 	@Override
 	public void initialize(CordovaInterface cordova, CordovaWebView webView) {
 		LOG.d(PLUGIN_NAME,"initializing...");
+		Utils.verifySpeechRecognitionPermissions(cordova.getActivity());
 		super.initialize(cordova, webView);
 		initNuanceEngine(cordova.getActivity(), this.preferences);
 	}

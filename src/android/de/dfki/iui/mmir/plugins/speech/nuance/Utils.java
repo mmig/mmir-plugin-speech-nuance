@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 
 public class Utils {
-	
 
 	// Speech Recognition Permissions
     private static final int REQUEST_SPEECH_RECOGNITION = 1363699478;
@@ -15,9 +14,9 @@ public class Utils {
     };
 
     /**
-     * Checks if the app has permission(s) for speech recognition
+     * Checks if the activity has permission(s) for speech recognition
      *
-     * If the app does not has permission then the user will be prompted to grant permissions
+     * If the activity does not has permission(s) then the user will be prompted to grant permission(s)
      *
      * @param activity
      */
