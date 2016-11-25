@@ -79,6 +79,8 @@
 			<uses-permission android:name="android.permission.BLUETOOTH" />
         </config-file>
         
+        <framework src="com.android.support:support-compat:25.0.1" />
+        
         <source-file
             src="src/android/de/dfki/iui/mmir/plugins/speech/nuance/NuanceSpeechPlugin.java"
             target-dir="src/de/dfki/iui/mmir/plugins/speech/nuance" />
@@ -92,12 +94,13 @@
             target-dir="src/de/dfki/iui/mmir/plugins/speech/nuance" />
         
         <source-file
+            src="src/android/de/dfki/iui/mmir/plugins/speech/nuance/Utils.java"
+            target-dir="src/de/dfki/iui/mmir/plugins/speech/nuance" />
+        
+        <source-file
             src="res/android/res/raw/rawbeep.wav"
             target-dir="res/raw" />
         
-        <source-file
-            src="res/android/android-support-v4.jar"
-            target-dir="libs" />
         
         <!-- Nucance libraries:
          		
