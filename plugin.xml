@@ -95,6 +95,9 @@
             src="res/android/res/raw/rawbeep.wav"
             target-dir="res/raw" />
         
+        <source-file
+            src="res/android/android-support-v4.jar"
+            target-dir="libs" />
         
         <!-- Nucance libraries:
          		
