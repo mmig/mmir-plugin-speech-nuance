@@ -10,7 +10,11 @@ public class Utils {
 	// Speech Recognition Permissions
     private static final int REQUEST_SPEECH_RECOGNITION = 1363699478;
     private static String[] PERMISSIONS_SPEECH_RECOGNITION = {
-            Manifest.permission.RECORD_AUDIO
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.ACCESS_NETWORK_STATE,
+            Manifest.permission.INTERNET,
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.BLUETOOTH
     };
 
     /**
