@@ -97,7 +97,7 @@ only contains "mock" data and will not work):
 <widget id="...
 
     <preference name="nuanceAppKey" value="{ 
-		(byte)0x... <copy & paste your app key here, in Android format>
+		(byte)0x... <copy & paste your app key here, in Android/iOS/HTTP format>
 	}"/>
     <preference name="nuanceAppId" value="NMDPTRIAL_...<copy & paste your app ID here>"/>
     <preference name="nuanceServerUrl" value="<copy & paste the server URL for the SpeechKit service>"/>

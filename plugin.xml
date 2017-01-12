@@ -11,7 +11,7 @@
     <keywords>cordova,speech,asr,speech recognition,tts,text to speech</keywords>
     
     <description>
-      Cordova plugin for Nuance speech recognizer / syntheziser (using Nuance SpeechKit v1.x).
+      Cordova plugin for Nuance speech recognizer / syntheziser (using Nuance SpeechKit v2.x).
     </description>
     
     <license>MIT</license>
@@ -103,23 +103,23 @@
          -->
         
         <source-file
-            src="res/android/libs/nmdp_speech_kit.jar"
+            src="res/android/libs/classes.jar"
             target-dir="libs" />
         
         <source-file
-            src="res/android/libs/armeabi/libnmsp_sk_speex.so"
+            src="res/android/libs/armeabi/libdmt_speex.so"
             target-dir="libs/armeabi" />
             
         <source-file
-            src="res/android/libs/armeabi-v7a/libnmsp_sk_speex.so"
+            src="res/android/libs/armeabi-v7a/libdmt_speex.so"
             target-dir="libs/armeabi-v7a" />
         
         <source-file
-            src="res/android/libs/arm64-v8a/libnmsp_sk_speex.so"
+            src="res/android/libs/arm64-v8a/libdmt_speex.so"
             target-dir="libs/arm64-v8a" />
         
         <source-file
-            src="res/android/libs/x86/libnmsp_sk_speex.so"
+            src="res/android/libs/x86/libdmt_speex.so"
             target-dir="libs/x86" />
         
     </platform>
@@ -133,11 +133,16 @@
             </feature>
         </config-file>
         
-        <header-file src="src/ios/de/nuancespeechplugin/Credentials.h" />
+       <!-- 
+       	<header-file src="src/ios/de/nuancespeechplugin/Credentials.h" />
         <source-file src="src/ios/de/nuancespeechplugin/Credentials.m"/>
         
         <header-file src="src/ios/de/nuancespeechplugin/NuanceSpeechPlugin.h" />
         <source-file src="src/ios/de/nuancespeechplugin/NuanceSpeechPlugin.m" />
+        -->
+        
+        <source-file src="src/ios/de/nuancespeechplugin/Credentials.swift"/>
+        <source-file src="src/ios/de/nuancespeechplugin/NuanceSpeechPlugin.swift" />
         
         <!-- Nucance libraries:
          		
@@ -155,4 +160,5 @@
 
     </platform>
     
+    <!-- <dependency id="cordova-plugin-add-swift-support" url="https://github.com/akofman/cordova-plugin-add-swift-support"/> -->
 </plugin>
