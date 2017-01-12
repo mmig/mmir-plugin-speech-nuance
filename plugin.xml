@@ -101,7 +101,7 @@
          		put/copy the libraries from your Android Dragon Mobile SDK into your local repo
          		(YOU SHOULD NOT upload these into a public repo!)
          -->
-        
+        <!--
         <source-file
             src="res/android/libs/classes.jar"
             target-dir="libs" />
@@ -121,11 +121,18 @@
         <source-file
             src="res/android/libs/x86/libdmt_speex.so"
             target-dir="libs/x86" />
+         -->
+         
+         
+    <framework src="res/android/res/nuanceBuild.gradle" custom="true" type="gradleReference" />
+
+    <resource-file src="res/android/libs/speechkit-2.1.3.aar" target="libs/speechkit-2.1.3.aar" />
         
     </platform>
     
     <!-- ios -->
-    <platform name="ios">
+   
+	<platform name="ios">
         
         <config-file target="config.xml" parent="/*">
             <feature name="NuanceSpeechPlugin" >
@@ -133,26 +140,26 @@
             </feature>
         </config-file>
         
-        <header-file src="src/ios/de/nuancespeechplugin/Credentials.h" />
-        <source-file src="src/ios/de/nuancespeechplugin/Credentials.m"/>
         
-        <header-file src="src/ios/de/nuancespeechplugin/NuanceSpeechPlugin.h" />
-        <source-file src="src/ios/de/nuancespeechplugin/NuanceSpeechPlugin.m" />
-        
+        <source-file src="src/ios/de/nuancespeechplugin/Credentials.swift"/>
+        <source-file src="src/ios/de/nuancespeechplugin/NuanceSpeechPlugin.swift" />
+      
         <!-- Nucance libraries:
          		
          		put/copy the libraries from your iOS Dragon Mobile SDK into your local repo
          		(YOU SHOULD NOT upload these into a public repo!)
          -->
          
-        <framework src="res/ios/frameworks/SpeechKit.framework" custom="true"/>
+   
+		<framework src="res/ios/frameworks/SpeechKit.framework" custom="true"/>
         <framework src="AVFoundation.framework" />
         <framework src="CFNetwork.framework" />
         <framework src="Foundation.framework" />
         <framework src="Security.framework" />
         <framework src="UIKit.framework" />
-        
+
 
     </platform>
     
+    <!-- <dependency id="cordova-plugin-add-swift-support" url="https://github.com/akofman/cordova-plugin-add-swift-support"/> -->
 </plugin>
