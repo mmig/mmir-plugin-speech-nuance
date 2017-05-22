@@ -31,10 +31,43 @@
  */
 newMediaPlugin = {
 		/**  @memberOf NuanceAndroidTextToSpeech# */
-		initialize: function(callBack){//, mediaManager){//DISABLED this argument is currently un-used -> disabled
+		initialize: function(callBack, mediaManager){
 			
 			/**  @memberOf NuanceAndroidTextToSpeech# */
 			var _pluginName = 'nuanceTextToSpeech';
+			
+			/** 
+			 * legacy mode: use pre-v4 API of mmir-lib
+			 * @memberOf NuanceAndroidTextToSpeech#
+			 */
+			var _isLegacyMode = true;
+			/** 
+			 * Reference to the mmir-lib core (only available in non-legacy mode)
+			 * @type mmir
+			 * @memberOf NuanceAndroidTextToSpeech#
+			 */
+			var _mmir = null;
+			if(mediaManager._get_mmir){
+				//_get_mmir() is only available for >= v4
+				_mmir = mediaManager._get_mmir();
+				//just to make sure: set legacy-mode if version is < v4
+				_isLegacyMode = _mmir? _mmir.isVersion(4, '<') : true;
+			}
+			/**
+			 * HELPER for require(): 
+			 * 		use module IDs (and require instance) depending on legacy mode
+			 * 
+			 * @param {String} id
+			 * 			the require() module ID
+			 * 
+			 * @returns {any} the require()'ed module
+			 * 
+			 * @memberOf NuanceAndroidTextToSpeech#
+			 */
+			var _req = function(id){
+				var name = (_isLegacyMode? '' : 'mmirf/') + id;
+				return _mmir? _mmir.require(name) : require(name);
+			};
 			
 			/**
 			 * separator char for language- / country-code (specific to Nuance language config / codes)
@@ -47,12 +80,12 @@ newMediaPlugin = {
 			 * @type mmir.LanguageManager
 			 * @memberOf NuanceAndroidTextToSpeech#
 			 */
-			var languageManager = require('languageManager');
+			var languageManager = _req('languageManager');
 			/** 
 			 * @type mmir.CommonUtils
 			 * @memberOf NuanceAndroidTextToSpeech#
 			 */
-			var commonUtils = require('commonUtils');
+			var commonUtils = _req('commonUtils');
 			
 			/** 
 			 * @type NuancePlugin
