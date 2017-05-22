@@ -34,6 +34,7 @@ import com.nuance.speechkit.TransactionException;
 
 import android.content.Context;
 import android.view.WindowManager;
+import de.dfki.iui.mmir.plugins.speech.nuance.Utils;
 
 public class NuanceSpeechPlugin extends CordovaPlugin {
 	private static final String PLUGIN_NAME = "NuancePlugin";
@@ -61,7 +62,9 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 
 //	private static final String MIC_LEVEL = "mic-levels";//FIXM EXPERIMENTAL API
 
-	private static final String MIC_LEVEL_LISTENER = "setMicLevelsListener";//FIXME EXPERIMENTAL API
+	private static final String MIC_LEVEL_LISTENER = "setMicLevelsListener";
+
+	private static final String INIT_MESSAGE_CHANNEL = "msg_channel";
 	
     // isFinal is used for the calling of the callback of stopRecording -> if the user has stopped the recording, then
     // isStopped is set and at the "Done"-event isFinal is set to true.
@@ -98,6 +101,11 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         TTS_DONE,
         TTS_ERROR
     }
+
+    /**
+     * Back-channel to JavaScript-side
+     */
+	private CallbackContext messageChannel;
 
     private ExtendedRecognizerListener recognizer = null;
 
@@ -265,6 +273,12 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 				result =  new PluginResult(Status.ERROR, errMsg + " " + e.toString());
 			}
 			
+		} else if (INIT_MESSAGE_CHANNEL.equals(action)) {
+
+			messageChannel = callbackContext;
+			result = new PluginResult(Status.OK, Utils.createMessage("action", "plugin", "status", "initialized plugin channel"));
+			result.setKeepCallback(true);
+
 		} else {
 			result = new PluginResult(Status.INVALID_ACTION);
 			isValidAction = false;
@@ -524,6 +538,16 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 		
 		return result;
 	}
+	
+
+    //send mic-levels value to JavaScript side
+    private void sendMicLevels(float levels){
+    	
+    	PluginResult micLevels = new PluginResult(Status.OK, Utils.createMessage("action", "miclevels", "value", levels));
+		micLevels.setKeepCallback(true);
+		
+		messageChannel.sendPluginResult(micLevels);
+    }
 	
 	private Transaction.Listener createVocalizerHandler(final CallbackContext callbackContext){//String id){
 		
@@ -1080,7 +1104,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
     				_lastChangeNotification = currentTime;
     				micLevels.clear();
     				
-    				NuanceSpeechPlugin.this.webView.sendJavascript("cordova.require('"+JS_PLUGIN_ID+"').fireMicLevelChanged(" + value + ");");
+    				NuanceSpeechPlugin.this.sendMicLevels(value);
     			}	
     		}
 		}

@@ -372,5 +372,56 @@ function _toSsml(sentences, lang){//TODO add/impl. voice-argument: <voice gender
 	return sb.join('');
 }
 
-module.exports = new NuancePlugin();
+
+//////////////back-channel from native implementation: ////////////////////////
+
+/**
+* Handles messages from native implementation.
+* 
+* Supported messages:
+* 
+* <ul>
+* 
+* 	<li><u>plugin status</u>:<br>
+* 		<pre>{action: "plugin", "status": STRING}</pre>
+* 	</li>
+* 	<li><u>miclevels</u>:<br>
+* 		<pre>{action: "miclevels", value: NUMBER}</pre>
+* 	</li>
+* </ul>
+*/
+function onMessageFromNative(msg) {
+
+	if (msg.action == 'miclevels') {
+	
+		_instance.fireMicLevelChanged(msg.value);
+	
+	} else if (msg.action == 'plugin') {
+	
+		//TODO handle plugin status messages (for now there is only an init-completed message...)
+		
+		console.log('[NuanceSpeechPlugin] Plugin status: "' + msg.status+'"');
+	
+	} else {
+	
+		throw new Error('[NuanceSpeechPlugin] Unknown action "' + msg.action+'": ', msg);
+	}
+}
+
+//register back-channel for native plugin when cordova gets available:
+if (cordova.platformId === 'android' || cordova.platformId === 'amazon-fireos' || cordova.platformId === 'windowsphone') {
+
+	var channel = require('cordova/channel');
+	
+	channel.createSticky('onNuanceSpeechPluginReady');
+	channel.waitForInitialization('onNuanceSpeechPluginReady');
+	
+	channel.onCordovaReady.subscribe(function() {
+		exec(onMessageFromNative, undefined, 'NuanceSpeechPlugin', 'msg_channel', []);
+		channel.initializationComplete('onNuanceSpeechPluginReady');
+	});
+}
+
+var _instance = new NuancePlugin();
+module.exports = _instance;
 
