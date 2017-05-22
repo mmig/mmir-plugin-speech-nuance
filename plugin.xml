@@ -92,6 +92,10 @@
             target-dir="src/de/dfki/iui/mmir/plugins/speech/nuance" />
         
         <source-file
+            src="src/android/de/dfki/iui/mmir/plugins/speech/nuance/Utils.java"
+            target-dir="src/de/dfki/iui/mmir/plugins/speech/nuance" />
+        
+        <source-file
             src="res/android/res/raw/rawbeep.wav"
             target-dir="res/raw" />
         
