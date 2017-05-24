@@ -102,14 +102,29 @@ NuancePlugin.prototype.recognize = function(language, successCallback, failureCa
  * Start speech recognition <strong>without</strong> End-of-Speech detection, i.e.
  * need to call #stopRecord.
  */
-NuancePlugin.prototype.startRecord = function(language, successCallback, failureCallback, withIntermediateResults, useLongPauseDetection){
+NuancePlugin.prototype.startRecord = function(language, successCallback, failureCallback, withIntermediateResults, useLongPauseDetection, maxAlternatives, languageModel){
+	
+	var args = [this.__lang(language)];
+	
+	if(withIntermediateResults){
+		args.push(true);//<- isSuppressFeedback is TRUE for intermediate results (i.e. give only reduced feedback for intermediate results)
+	} else {
+		args.push(false);
+	}
+	
+	if(typeof useLongPauseDetection === 'boolean'){
+		args.push(useLongPauseDetection);
+	}
+	
+	if(typeof maxAlternatives === 'number'){
+		args.push(maxAlternatives);
+	}
+	
+	if(typeof languageModel === 'string'){
+		args.push(languageModel);
+	}
+	
 	if (withIntermediateResults){
-		
-		var args = [this.__lang(language), true];//<- isSuppressFeedback is TRUE for intermediate results (i.e. give only reduced feedback for intermediate results)
-		
-		if(typeof useLongPauseDetection === 'boolean'){
-			args.push(useLongPauseDetection);
-		}
 		
 		return exec(successCallback,
 					 failureCallback,
@@ -123,7 +138,7 @@ NuancePlugin.prototype.startRecord = function(language, successCallback, failure
   					 failureCallback,
   					 'NuanceSpeechPlugin',
   					 'start_rec',
-  					 [this.__lang(language)]);
+  					 args);
 	}
 };
 
