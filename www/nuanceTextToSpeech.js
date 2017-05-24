@@ -68,6 +68,21 @@ newMediaPlugin = {
 				var name = (_isLegacyMode? '' : 'mmirf/') + id;
 				return _mmir? _mmir.require(name) : require(name);
 			};
+			/**
+			 * HELPER for cofigurationManager.get() backwards compatibility (i.e. legacy mode)
+			 * 
+			 * @param {String|Array<String>} path
+			 * 			the path to the configuration value
+			 * @param {any} [defaultValue]
+			 * 			the default value, if there is no configuration value for <code>path</code>
+			 * 
+			 * @returns {any} the configuration value
+			 * 
+			 * @memberOf NuanceAndroidTextToSpeech#
+			 */
+			var _conf = function(path, defaultValue){
+				return _isLegacyMode? config.get(path, true, defaultValue) : config.get(path, defaultValue);
+			};
 			
 			/**
 			 * separator char for language- / country-code (specific to Nuance language config / codes)
@@ -86,6 +101,16 @@ newMediaPlugin = {
 			 * @memberOf NuanceAndroidTextToSpeech#
 			 */
 			var commonUtils = _req('commonUtils');
+			/** 
+			 * @type mmir.ConfigurationManager
+			 * @memberOf NuanceAndroidTextToSpeech#
+			 */
+			var config = _req('configurationManager');
+			/** 
+			 * @type mmir.Logger
+			 * @memberOf NuanceAndroidTextToSpeech#
+			 */
+			var logger = new _req('logger').create(_pluginName);
 			
 			/** 
 			 * @type NuancePlugin
@@ -101,6 +126,12 @@ newMediaPlugin = {
 					"TTS_BEGIN": "TTS_BEGIN",
 					"TTS_DONE": "TTS_DONE"
 			};
+
+			//set log-level from configuration (if there is setting)
+			var loglevel = _conf([_pluginName, 'logLevel']);
+			if(typeof loglevel !== 'undefined'){
+				logger.setLevel(loglevel);
+			}
 			
 			/** 
 			 * @type Function
@@ -117,7 +148,7 @@ newMediaPlugin = {
 							if(onStart){
 								onStart(msg.message);
 							} else {
-								console.debug('NuanceTTS.js: started.');//FIXME debug (use mediamanager's logger instead)
+								logger.debug('started.');
 							}
 						}
 						else if(msg.type === return_types.TTS_DONE){
@@ -125,7 +156,7 @@ newMediaPlugin = {
 							if(onEnd){
 								onEnd(msg.message);
 							} else {
-								console.debug('NuanceTTS.js: finished.');//FIXME debug (use mediamanager's logger instead)
+								logger.debug('finished.');
 							}
 						}
 					}
@@ -133,12 +164,12 @@ newMediaPlugin = {
 					if(isHandled === false) {
 						//DEFALT: treat callback-invocation as DONE callback
 						
-						console.warn('NuanceTTS.js: success-callback invoked without result / specific return-message.');//FIXME debug (use mediamanager's logger instead)
+						logger.warn('success-callback invoked without result / specific return-message.');
 						
 						if(onEnd){
 							onEnd();
 						} else {
-							console.debug('NuanceTTS.js: finished.');//FIXME debug (use mediamanager's logger instead)
+							logger.debug('finished.');
 						}
 					}
 				};
@@ -240,7 +271,7 @@ newMediaPlugin = {
 				    		if(options.error){
 				    			options.error(e);
 				    		} else {
-				    			console.error(e);
+				    			logger.error(e);
 				    		}
 				    	}
 				    	

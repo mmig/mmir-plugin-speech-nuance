@@ -68,12 +68,39 @@ newMediaPlugin = {
 				var name = (_isLegacyMode? '' : 'mmirf/') + id;
 				return _mmir? _mmir.require(name) : require(name);
 			};
+			/**
+			 * HELPER for cofigurationManager.get() backwards compatibility (i.e. legacy mode)
+			 * 
+			 * @param {String|Array<String>} path
+			 * 			the path to the configuration value
+			 * @param {any} [defaultValue]
+			 * 			the default value, if there is no configuration value for <code>path</code>
+			 * 
+			 * @returns {any} the configuration value
+			 * 
+			 * @memberOf NuanceAndroidAudioInput#
+			 */
+			var _conf = function(path, defaultValue){
+				return _isLegacyMode? config.get(path, true, defaultValue) : config.get(path, defaultValue);
+			};
 			
 			/** 
 			 * @type mmir.LanguageManager
 			 * @memberOf NuanceAndroidAudioInput#
 			 */
 			var languageManager = _req('languageManager');
+
+			/** 
+			 * @type mmir.ConfigurationManager
+			 * @memberOf NuanceAndroidAudioInput#
+			 */
+			var config = _req('configurationManager');
+			
+			/** 
+			 * @type mmir.Logger
+			 * @memberOf NuanceAndroidAudioInput#
+			 */
+			var logger = new _req('logger').create(_pluginName);
 			
 			/** 
 			 * @type NuancePlugin
@@ -154,7 +181,7 @@ newMediaPlugin = {
 			 * 
 			 * @see #max_error_retry
 			 * 
-			 * @memberOf AndroidAudioInput#
+			 * @memberOf NuanceAndroidAudioInput#
 			 */
 			var error_counter = 0;
 			
@@ -164,7 +191,7 @@ newMediaPlugin = {
 			 * 
 			 * @see #error_counter
 			 * 
-			 * @memberOf AndroidAudioInput#
+			 * @memberOf NuanceAndroidAudioInput#
 			 * @default 5
 			 */
 			var max_error_retry = 5;
@@ -199,12 +226,18 @@ newMediaPlugin = {
 					"RECORDING_DONE": 		"RECORDING_DONE"
 			};
 			
+			//set log-level from configuration (if there is setting)
+			var loglevel = _conf([_pluginName, 'logLevel']);
+			if(typeof loglevel !== 'undefined'){
+				logger.setLevel(loglevel);
+			}
+			
 			//backwards compatibility (pre v0.6.0)
 			if(!mediaManager._preparing){
-				mediaManager._preparing = function(name){console.warn(name + ' is preparing - NOTE: this is a stub-function. Overwrite MediaManager._preparing for setting custom implementation.');};
+				mediaManager._preparing = function(name){logger.warn(name + ' is preparing - NOTE: this is a stub-function. Overwrite MediaManager._preparing for setting custom implementation.');};
 			}
 			if(!mediaManager._ready){
-				mediaManager._ready     = function(name){console.warn(name + ' is ready - NOTE: this is a stub-function. Overwrite MediaManager._ready for setting custom implementation.');};
+				mediaManager._ready     = function(name){logger.warn(name + ' is ready - NOTE: this is a stub-function. Overwrite MediaManager._ready for setting custom implementation.');};
 			}
 
 			/**
@@ -247,13 +280,14 @@ newMediaPlugin = {
 			var call_callback_with_last_result = function(){
 				if(typeof last_result !== "undefined") {
 					if (currentSuccessCallback){
+						if(logger.isDebug()) logger.debug("last_result is " + JSON.stringify(last_result));
 						currentSuccessCallback.apply(mediaManager, last_result);
 						last_result = void(0);
 					} else {
-						console.error("nuanceAudioInput Error: No callback function defined for success.");
+						logger.error("No callback function defined for success.");
 					}
 				} else {
-					console.warn("nuanceAudioInput Warning: last_result is undefined.");
+					logger.info("last_result is undefined.");
 				}
 			};
 
@@ -269,7 +303,7 @@ newMediaPlugin = {
 			var successCallbackWrapper = function successCallbackWrapper (cb, options){
 				return (function (res){
 					
-//					console.log("nuanceAudioInput: " + JSON.stringify(res));//FIXM DEBUG
+//					logger.log(JSON.stringify(res));//FIXM DEBUG
 					
 					var asr_result = null;
 					var asr_score = -1;
@@ -342,7 +376,7 @@ newMediaPlugin = {
 //								options.results,
 //								options.mode
 //							);
-//							console.warn("[NuanceAudioInput] Success - Repeat - Else\nType: " + asr_type+"\n"+JSON.stringify(res));
+//							logger.warn("Success - Repeat - Else\nType: " + asr_type+"\n"+JSON.stringify(res));
 						}
 
 					} else {
@@ -372,7 +406,7 @@ newMediaPlugin = {
 						if (cb){
 							cb(asr_result, asr_score, asr_type, asr_alternatives);
 						} else {
-							console.error("nuanceAudioInput Error: No callback function defined for success.");
+							logger.error("No callback function defined for success.");
 						}
 						
 					}
@@ -450,10 +484,10 @@ newMediaPlugin = {
 								
 							}
 							else if (cb){
-								console.warn("nuanceAudioInput: Calling error callback (" + error_code + ": " + error_msg + ").");
+								logger.warn("Calling error callback (" + error_code + ": " + error_msg + ").");
 								cb(error_msg, error_code, error_suggestion);
 							} else {
-								console.error("nuanceAudioInput Error: No callback function defined for failure.");
+								logger.error("Error: No callback function defined for failure.");
 							}
 						} else {
 							
@@ -481,10 +515,10 @@ newMediaPlugin = {
 						
 						// do no repeat, just call errorCallback
 						if (cb){
-							console.debug("nuanceAudioInput: Calling error callback (" + error_code + ").");
+							logger.debug("Calling error callback (" + error_code + ").");
 							cb(error_msg, error_code, error_suggestion, error_type);
 						} else {
-							console.error("nuanceAudioInput Error: No callback function defined for failure.");
+							logger.error("nuanceAudioInput Error: No callback function defined for failure.");
 						}
 					}
 				});
