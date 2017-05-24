@@ -316,6 +316,12 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 			String text = data.getString(0);
 			boolean isSsml = data.getBoolean(2);
 			
+			String voice = null;
+			if(data.length() > 3){
+				voice = data.getString(3);
+			}
+			
+			NuanceEngine.getInstance().setVoice(voice);
 			NuanceEngine.getInstance().speak(text, isSsml, createVocalizerHandler(callbackContext));
 			
 			PluginResult result;

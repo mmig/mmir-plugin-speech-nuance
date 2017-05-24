@@ -1,5 +1,5 @@
 ﻿/*
- * 	Copyright (C) 2012-2015 DFKI GmbH
+ * 	Copyright (C) 2012-2017 DFKI GmbH
  * 	Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
  * 	German Research Center for Artificial Intelligence
  * 	http://www.dfki.de
@@ -28,14 +28,6 @@
 var exec = require('cordova/exec'),
 	utils = require('cordova/utils');
 
-//internal const. for creating SSML strings
-var SSML_HEADER_START = "<?xml version=\"1.0\"?>\n<speak version=\"1.1\" xmlns=\"http://www.w3.org/2001/10/synthesis\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.w3.org/2001/10/synthesis http://www.w3.org/TR/speech-synthesis11/synthesis.xsd\" xml:lang=\"";
-var SSML_HEADER_END = "\">";
-var SSML_END = "</speak>";
-var SSML_PAUSE = "<break/>";
-var SSML_SENTENCE_START = "<s>";
-var SSML_SENTENCE_END = "</s>";
-
 /**
  *  
  * @return Instance of NuancePlugin
@@ -61,29 +53,38 @@ NuancePlugin.prototype.init = function(successCallback, failureCallback) {
     					 []);
 };
 
-NuancePlugin.prototype.tts = function(text, language, successCallback, failureCallback){
+NuancePlugin.prototype.tts = function(text, language, successCallback, failureCallback, pauseDuration, voice){
 	
 	language = this.__lang(language);
 	
 	var isSsml = false;
-	if(utils.isArray(text)){
+	var isTextArray = utils.isArray(text);
+	
+	//TODO impl. parameter voice, pauseDuration without using SSML?
+	if(isTextArray){//NOTE pauseDuration is only relevant for sentence-lists (i.e. array) // || isFinite(pauseDuration)){
 		isSsml = true;
-		text = _toSsml(text, language);
+		text = isTextArray? text : [text];
+		text = _toSsml(text, language, pauseDuration, voice);
+	}
+	
+	var args = [text,language,isSsml];
+	if(voice && !isSsml){
+		args.push(voice);
 	}
 	
 	return exec(successCallback,
   					 failureCallback,
   					 'NuanceSpeechPlugin',
   					 'tts',
-  					 [text,language,isSsml]);
+  					 args);
 };
 
 /**
  * @deprecated use #tts function instead (NOTE the different order of the arguments!)
  * @type Function
  */
-NuancePlugin.prototype.speak = function(text, successCallback, failureCallback, language){
-	this.tts(text, language, successCallback, failureCallback);
+NuancePlugin.prototype.speak = function(text, successCallback, failureCallback, language, pauseDuration, voice){
+	this.tts(text, language, successCallback, failureCallback, pauseDuration, voice);
 };
 
 /**
@@ -317,9 +318,22 @@ NuancePlugin.prototype.__lang = function(language){
 
 ////////////////////////////////////////////// private / internal helpers ///////////////////////////////
 
-//TODO set voice, e.g.
-//<voice gender="female" variant="2">
-//<voice name="Mike" required="name">
+
+//internal const. for creating SSML strings
+var SSML_HEADER_START = "<?xml version=\"1.0\"?>\n<speak version=\"1.1\" xmlns=\"http://www.w3.org/2001/10/synthesis\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.w3.org/2001/10/synthesis http://www.w3.org/TR/speech-synthesis11/synthesis.xsd\" xml:lang=\"";
+var SSML_VOICE_NAME_START = "<voice name=\"";
+var SSML_VOICE_NAME_END = "\">";
+var SSML_VOICE_END = "</voice>";
+var SSML_HEADER_END = "\">";
+var SSML_END = "</speak>";
+var SSML_PAUSE = "<break/>";
+var SSML_PAUSE_START = "<break";
+var SSML_PAUSE_DURATION_START = "<break time=\"";
+var SSML_PAUSE_DURATION_END = "ms\"/>";
+var SSML_PAUSE_END = ">";
+var SSML_SENTENCE_START = "<s>";
+var SSML_SENTENCE_END = "</s>";
+
 
 /**
  * HELPER simple conversion of String-array into SSML:
@@ -333,15 +347,29 @@ NuancePlugin.prototype.__lang = function(language){
  * @param {String} lang
  * 				the language code
  * 
+ * @param {Number} [pauseDuration] OPTIONAL
+ * 				length (in ms) of pause between sentences
+ * 
+ * @param {String} [voice] OPTIONAL
+ * 				the name of a voice
+ * 
  * @return {String} the SSML code as string
  */
-function _toSsml(sentences, lang){//TODO add/impl. voice-argument: <voice gender="female" variant="2"> or <voice name="Mike" required="name">
+function _toSsml(sentences, lang, pauseDuration, voice){
 	
 	var sb = [];
 	
 	sb.push(SSML_HEADER_START);
 	sb.push(lang);
 	sb.push(SSML_HEADER_END);
+	
+	if(voice){
+		sb.push(SSML_VOICE_NAME_START);
+		sb.push(voice);
+		sb.push(SSML_VOICE_NAME_END);
+	}
+	
+	pauseDuration = isFinite(pauseDuration)? '' + pauseDuration : '';
 	
 //	sb.push(ssmlVoiceStart);
 //	sb.push(getVoice());
@@ -355,7 +383,7 @@ function _toSsml(sentences, lang){//TODO add/impl. voice-argument: <voice gender
 		
 		if(str.length === 0){
 			
-			sb.push(SSML_PAUSE);
+			_addSsmlPause(pauseDuration, sb);
 			
 		} else {
 			
@@ -363,13 +391,40 @@ function _toSsml(sentences, lang){//TODO add/impl. voice-argument: <voice gender
 			sb.push(str);
 			sb.push(SSML_SENTENCE_END);
 			
+			//add pause between sentences
+			if(i < size-1){
+				_addSsmlPause(pauseDuration, sb);
+			}
 		}
 		
 	}
 	
+	if(voice){
+		sb.push(SSML_VOICE_END);
+	}
 	sb.push(SSML_END);
 	
 	return sb.join('');
+}
+/**
+ * HELPER for adding a SSML pause
+ * 
+ * @param {String|""} pauseDuration
+ * 				the pause duration as a number within a string
+ * 				(or an empty string for using the default pause duration)
+ * @param {Array<String> stringBuffer
+ * 				the string-buffer containing the SSML text so far
+ * 				(to which the pause-element will be added)
+ */
+function _addSsmlPause(pauseDuration, stringBuffer){
+	
+	if(pauseDuration){
+		stringBuffer.push(SSML_PAUSE_DURATION_START);
+		stringBuffer.push(pauseDuration);
+		stringBuffer.push(SSML_PAUSE_DURATION_END);
+	} else {
+		stringBuffer.push(SSML_PAUSE);
+	}
 }
 
 
@@ -424,4 +479,3 @@ if (cordova.platformId === 'android' || cordova.platformId === 'amazon-fireos' |
 
 var _instance = new NuancePlugin();
 module.exports = _instance;
-
