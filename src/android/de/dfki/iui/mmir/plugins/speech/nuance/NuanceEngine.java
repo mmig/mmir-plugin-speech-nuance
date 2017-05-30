@@ -13,6 +13,7 @@ import com.nuance.speechkit.DetectionType;
 import com.nuance.speechkit.Language;
 import com.nuance.speechkit.Recognition;
 import com.nuance.speechkit.RecognitionType;
+import com.nuance.speechkit.ResultDeliveryType;
 import com.nuance.speechkit.Session;
 import com.nuance.speechkit.Transaction;
 import com.nuance.speechkit.TransactionException;
@@ -296,36 +297,37 @@ public class NuanceEngine {
 			_ttsTransaction = _speechSession.speakString(text, options, _ttsTransactionListener);
 	}
 
-	public void recognize(Transaction.Listener callback, boolean shortPauseDetection) {
-		this.recognize( callback, shortPauseDetection, false);
-	}
+//	public void recognize(Transaction.Listener callback, boolean shortPauseDetection) {
+//		this.recognize( callback, shortPauseDetection, false);
+//	}
 
-	public void recognize(Transaction.Listener callback, boolean shortPauseDetection, boolean suppressStartPrompt) {
+	public void recognize(Transaction.Listener callback, boolean shortPauseDetection, boolean isDictation, boolean suppressStartPrompt) {
+		RecognitionType recogType = isDictation? RecognitionType.DICTATION : RecognitionType.SEARCH;
+		DetectionType dectType = shortPauseDetection? DetectionType.Short : DetectionType.Long;
 		//start recognition with EOS detection:
-        if (shortPauseDetection){
-            this.doRecognize(callback, DetectionType.Short, suppressStartPrompt);
-        } else {
-            this.doRecognize(callback, DetectionType.Long, suppressStartPrompt);
-        }
-
+        this.doRecognize(callback, dectType, recogType, suppressStartPrompt);
 	}
 
-	public void recognizeWithNoEndOfSpeechDetection(Transaction.Listener callback) {
+	public void recognizeWithNoEndOfSpeechDetection(Transaction.Listener callback, boolean isDictation) {
+		RecognitionType recogType = isDictation? RecognitionType.DICTATION : RecognitionType.SEARCH;
 		//start recognition without EOS detection:
-		this.doRecognize(callback, DetectionType.None);
+		this.doRecognize(callback, DetectionType.None, recogType, false);
     }
 
-	private synchronized void doRecognize(final Transaction.Listener callback, DetectionType endOfSpeechRecognitionMode) {
-		this.doRecognize(callback, endOfSpeechRecognitionMode, false, false);
+//	private synchronized void doRecognize(final Transaction.Listener callback, DetectionType endOfSpeechRecognitionMode) {
+//		this.doRecognize(callback, endOfSpeechRecognitionMode, false, false);
+//	}
+//
+//	private synchronized void doRecognize(final Transaction.Listener callback, DetectionType endOfSpeechRecognitionMode, boolean isNoStartPrompt) {
+//		this.doRecognize(callback, endOfSpeechRecognitionMode, isNoStartPrompt, false);
+//	}
+	
+	private synchronized void doRecognize(final Transaction.Listener callback, DetectionType endOfSpeechRecognitionMode, RecognitionType recognitionType, boolean isNoStartPrompt) {
+		this.doRecognize(callback, endOfSpeechRecognitionMode, recognitionType, isNoStartPrompt, false);
 	}
-
-	private synchronized void doRecognize(final Transaction.Listener callback, DetectionType endOfSpeechRecognitionMode, boolean isNoStartPrompt) {
-		this.doRecognize(callback, endOfSpeechRecognitionMode, isNoStartPrompt, false);
-	}
-
 
 	//private synchronized void doRecognize(final Transaction.Listener callback, int endOfSpeechRecognitionMode, boolean isNoStartPrompt , boolean isNoStopPrompt) {
-	private synchronized void doRecognize(final Transaction.Listener callback, DetectionType endOfSpeechRecognitionMode, boolean isNoStartPrompt , boolean isNoStopPrompt) {
+	private synchronized void doRecognize(final Transaction.Listener callback, DetectionType endOfSpeechRecognitionMode, RecognitionType recognitionType, boolean isNoStartPrompt , boolean isNoStopPrompt) {
 		//"singleton" recognition: only one recognition process at a time is allowed
 		//							--> ensure all previous processes are stopped.
 		if(_asrTransaction != null){
@@ -335,7 +337,7 @@ public class NuanceEngine {
 		_currentRecognitionHandler = callback;
 
 
-		Transaction.Options options = createAsrOptions(endOfSpeechRecognitionMode, RecognitionType.DICTATION, isNoStartPrompt, isNoStopPrompt);
+		Transaction.Options options = createAsrOptions(endOfSpeechRecognitionMode, recognitionType, isNoStartPrompt, isNoStopPrompt);
 		
 		_asrTransaction = _speechSession.recognize(options, _asrTransactionListener);
 		Log.d(PLUGIN_NAME, "start transaction with id: " + _asrTransaction.getSessionID());
@@ -346,7 +348,10 @@ public class NuanceEngine {
 		Transaction.Options asrOpt = new Transaction.Options();
 		asrOpt.setRecognitionType(recognitionType);//RecognitionType.DICTATION);
 		asrOpt.setDetection(endOfSpeechRecognitionMode);//DetectionType.Short
-		asrOpt.setLanguage(new Language(_currentLanguage));//
+		asrOpt.setLanguage(new Language(_currentLanguage));
+		
+		//TODO TEST
+		asrOpt.setResultDeliveryType(ResultDeliveryType.PROGRESSIVE);
 		
 		Audio start = _asrOpt.getStartEarcon();
 		Audio stop = _asrOpt.getStopEarcon();
