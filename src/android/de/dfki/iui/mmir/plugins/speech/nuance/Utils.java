@@ -11,7 +11,7 @@ import android.support.v4.app.ActivityCompat;
 
 public class Utils {
 	
-	private static final String NAME = "AndroidSpeechPlugin::Util";
+	private static final String NAME = "NuanceSpeechPlugin::Util";
 	
 	// Speech Recognition Permissions
     private static final int REQUEST_SPEECH_RECOGNITION = 1363699478;
