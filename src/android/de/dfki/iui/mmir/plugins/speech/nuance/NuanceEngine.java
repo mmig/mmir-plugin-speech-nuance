@@ -295,33 +295,32 @@ public class NuanceEngine {
 			_vocalizer.speakString(text, context);
 	}
 
-	public void recognize(Recognizer.Listener callback, boolean shortPauseDetection) {
-		this.recognize( callback, shortPauseDetection, false);
-	}
+//	public void recognize(Recognizer.Listener callback, boolean shortPauseDetection) {
+//		this.recognize( callback, shortPauseDetection, false);
+//	}
 	
-	public void recognize(Recognizer.Listener callback, boolean shortPauseDetection, boolean suppressStartPrompt) {
+	public void recognize(Recognizer.Listener callback, boolean shortPauseDetection, boolean isDictation, boolean suppressStartPrompt) {
+		String recogType = isDictation? Recognizer.RecognizerType.Dictation : Recognizer.RecognizerType.Search;
+		int dectType = shortPauseDetection? Recognizer.EndOfSpeechDetection.Short : Recognizer.EndOfSpeechDetection.Long;
 		//start recognition with EOS detection:
-        if (shortPauseDetection){
-            this.doRecognize(callback, Recognizer.EndOfSpeechDetection.Short, suppressStartPrompt);
-        } else {
-            this.doRecognize(callback, Recognizer.EndOfSpeechDetection.Long, suppressStartPrompt);
-        }
+        this.doRecognize(callback, dectType, recogType, suppressStartPrompt, false);
 	}
 
-	public void recognizeWithNoEndOfSpeechDetection(Recognizer.Listener callback) {
+	public void recognizeWithNoEndOfSpeechDetection(Recognizer.Listener callback, boolean isDictation) {
+		String recogType = isDictation? Recognizer.RecognizerType.Dictation : Recognizer.RecognizerType.Search;
 		//start recognition without EOS detection:
-        this.doRecognize(callback, Recognizer.EndOfSpeechDetection.None);
+        this.doRecognize(callback, Recognizer.EndOfSpeechDetection.None, recogType, false, false);
     }
 	
-	private synchronized void doRecognize(final Recognizer.Listener callback, int endOfSpeechRecognitionMode) {
-		this.doRecognize(callback, endOfSpeechRecognitionMode, false, false);
-	}
+//	private synchronized void doRecognize(final Recognizer.Listener callback, int endOfSpeechRecognitionMode) {
+//		this.doRecognize(callback, endOfSpeechRecognitionMode, false, false);
+//	}
+//	
+//	private synchronized void doRecognize(final Recognizer.Listener callback, int endOfSpeechRecognitionMode, boolean isNoStartPrompt) {
+//		this.doRecognize(callback, endOfSpeechRecognitionMode, isNoStartPrompt, false);
+//	}
 	
-	private synchronized void doRecognize(final Recognizer.Listener callback, int endOfSpeechRecognitionMode, boolean isNoStartPrompt) {
-		this.doRecognize(callback, endOfSpeechRecognitionMode, isNoStartPrompt, false);
-	}
-	
-	private synchronized void doRecognize(final Recognizer.Listener callback, int endOfSpeechRecognitionMode, boolean isNoStartPrompt , boolean isNoStopPrompt) {
+	private synchronized void doRecognize(final Recognizer.Listener callback, int endOfSpeechRecognitionMode, String recognitionType, boolean isNoStartPrompt , boolean isNoStopPrompt) {
 
 		//"singleton" recognition: only one recognition process at a time is allowed
 		//							--> ensure all previous processes are stopped.
@@ -331,7 +330,7 @@ public class NuanceEngine {
 		_currentRecognitionHandler = callback;
 		
 		_currentRecognizer = _speechKit.createRecognizer(
-				Recognizer.RecognizerType.Dictation,
+				recognitionType,
                 endOfSpeechRecognitionMode,
 				_currentLanguage,
 				_recognitionListener, 
