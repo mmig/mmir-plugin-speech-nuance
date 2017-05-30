@@ -47,7 +47,7 @@ execute the following command in Cordova project's root directory:
 
 use command: 
 
-    cordova plugin add <file path to plugin directory>
+    cordova plugin add <file path to plugin directory> --nofetch
 
 If plugin source code (from this repository) is located in directory: 
 
@@ -55,7 +55,7 @@ If plugin source code (from this repository) is located in directory:
 
 execute the following command in Cordova project's root directory: 
 
-    cordova plugin add D:\DevProjects\Eclipse_workplace\mmir-plugin-nuancespeech
+    cordova plugin add D:\DevProjects\Eclipse_workplace\mmir-plugin-nuancespeech --nofetch
 
 
 ## Nuance LIBRARIES AND CREDENTIALS

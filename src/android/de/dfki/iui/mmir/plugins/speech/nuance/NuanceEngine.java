@@ -24,6 +24,8 @@ public class NuanceEngine {
 	private Handler _handler;
 	private Recognizer _currentRecognizer;
 	private String _currentLanguage = "eng-GBR";
+	private String _currentVoice = null;
+	private Vocalizer.Listener _currentVocalizerHandler;
 	private Recognizer.Listener _currentRecognitionHandler;
 
 	private Context _context;
@@ -99,7 +101,7 @@ public class NuanceEngine {
 		_speechKit.setDefaultRecognizerPrompts(this._defaultStartPrompt, this._defaultStopPrompt, null, null);
 		
 		// Create Vocalizer listener
-		Vocalizer.Listener vocalizerListener = new Vocalizer.Listener() {
+		_currentVocalizerHandler = new Vocalizer.Listener() {
 			@Override
 			public void onSpeakingBegin(Vocalizer vocalizer, String text, Object context) {
 				Log.d(PLUGIN_TTS_NAME, String.format("start speaking: '%s'",text));
@@ -121,9 +123,29 @@ public class NuanceEngine {
 		};
 
 		// Create a single Vocalizer here.
-		_vocalizer = _speechKit.createVocalizerWithLanguage(_currentLanguage, vocalizerListener, new Handler());
+		_vocalizer = createVocalizer();
 		_recognitionListener = createRecognitionListener();
 		_handler = new Handler();
+	}
+	
+	private Vocalizer createVocalizer(){
+		
+		if(this._speechKit != null){
+			if(_currentVocalizerHandler != null){
+				Vocalizer vocalizer = _speechKit.createVocalizerWithLanguage(_currentLanguage, _currentVocalizerHandler, new Handler());
+				if(_currentVoice != null){
+					vocalizer.setVoice(_currentVoice);
+				}
+				return vocalizer;
+			}
+			else {
+				Log.e(PLUGIN_NAME, "Cannot create Vocalizer: Vocalizer.Listener not initialized yet.");
+			}
+		}
+		else {
+			Log.e(PLUGIN_NAME, "Cannot create Vocalizer: SpeechKit not initialized.");
+		}
+		return null;
 	}
 	
 	private Prompt createDefaultStartPrompt(){
@@ -347,6 +369,22 @@ public class NuanceEngine {
 			_currentLanguage = newLang;
 			_vocalizer.cancel();
 			_vocalizer.setLanguage(newLang);
+		}
+	}
+	
+	public void setVoice(Object text) {
+		String newVoice = (String) text;
+		if (
+				(_currentVoice == null && newVoice != null) ||
+				(_currentVoice != null && !_currentVoice.equals(newVoice))
+		){
+			_currentVoice = newVoice;
+			_vocalizer.cancel();
+			if(newVoice == null){
+				_vocalizer = createVocalizer();
+			} else {
+				_vocalizer.setVoice(newVoice);
+			}
 		}
 	}
 	
