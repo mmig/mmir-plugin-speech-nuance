@@ -19,10 +19,10 @@ into the platform's resource folders `<www assets>/mmirf/env/media/nuance*.js`
 
 ## INSTALLATION
 
-It is *recommended* to create a local copy of the plugin/repository and place your resources and credentials
-for Dragon Mobile SDK there (i.e. not the installation directly from the GIT repository).
+It is *recommended* to install the plugin/repository from the GIT repository.
 
-See the section below for installing [from a local copy of the repository](#from-local-copy-of-the-repository-recommended)
+Alternatively, the plugin can be installed unsing local resources for the Dragon Mobile SpeechKit, 
+see the section below for installing [from a local copy of the repository](#from-local-copy-of-the-repository)
 and the section about the [Nuance libraries and credentials](#nuance-libraries-and-credentials).
 
 
@@ -30,7 +30,7 @@ For additional information you can also visit Nuance's site on Phonegap/Cordova 
 https://nuancedev.github.io/samples/#phonegap
 
 
-### From GIT repository (recommanded)
+### From GIT repository (recommended)
 
 execute the following command in Cordova project's root directory: 
 
