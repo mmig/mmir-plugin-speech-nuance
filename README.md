@@ -37,7 +37,7 @@ execute the following command in Cordova project's root directory:
     cordova plugin add https://github.com/mmig/mmir-plugin-speech-nuance.git
 
 
-### From local copy of the repository (recommanded)
+### From local copy of the repository (recommended)
 
 (1) check out the repository into a local directory (or download its ZIP file and decompress it)
 
