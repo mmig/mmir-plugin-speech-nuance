@@ -30,14 +30,14 @@ For additional information you can also visit Nuance's site on Phonegap/Cordova 
 https://nuancedev.github.io/samples/#phonegap
 
 
-### From GIT repository
+### From GIT repository (recommanded)
 
 execute the following command in Cordova project's root directory: 
 
     cordova plugin add https://github.com/mmig/mmir-plugin-speech-nuance.git
 
 
-### From local copy of the repository (recommended)
+### From local copy of the repository
 
 (1) check out the repository into a local directory (or download its ZIP file and decompress it)
 
@@ -60,13 +60,20 @@ execute the following command in Cordova project's root directory:
 
 ## Nuance LIBRARIES AND CREDENTIALS
 
-You need to add the native libararies and resources from your the Dragon Mobile SDK into
-the plugin's `/res` directories.
+By default, the `mmir-plugin-speech-nuance` plugin will use repositories/dependency
+managers for retrieving the Nuance SpeechKit libraries.
+
+Alternatively, the libraries can be included via locally stored files (see section below).
+
+## Use local LIBRARIES
+
+For using local libraries, You need to add/copy the native libraries and resources
+from your the Dragon Mobile SDK into the plugin's `/res` directory structure
+as follows:
 
 
     /res/android/
-        ./libs/
-        ./res/
+        ./libs/speechkit-2.2.1.aar
     ...
     
     /res/ios/frameworks/SpeechKit.framework/
@@ -74,6 +81,25 @@ the plugin's `/res` directories.
         ./Resources/
         ./SpeechKit
     ...
+
+
+Then you need to edit the `plugin.xml` of the `mmir-plugin-speech-nuance` plugin:
+ * __android:__
+   * enable entry for  
+     `<resource-file src="res/android/libs/speechkit-x.x.x.aar" target="libs/speechkit-x.x.x.aar" /`
+   * and edit file `res/android/res/nuanceBuild.gradle` (see comments in file)
+ * __ios:__
+   * enable entries  
+     ```
+     <framework src="res/ios/frameworks/SpeechKit.framework" custom="true"/>
+     <framework src="AVFoundation.framework" />
+     <framework src="CFNetwork.framework" />
+     <framework src="Foundation.framework" />
+     <framework src="Security.framework" />
+     <framework src="UIKit.framework" />
+     ```
+   * disable entry  
+     `<framework src="SpeechKit" type="podspec" spec="~> x.x.x" />`
 
 
 ### Credentials via config.xml - FOR DEVELOPMENT ONLY

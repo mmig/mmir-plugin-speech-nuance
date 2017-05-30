@@ -1,13 +1,10 @@
 
-copy your Nuance Dragon Mobile libraries (SpeechKit) to the corresponding platform directories
+for including locally stored libraries, copy your Nuance Dragon Mobile libraries (SpeechKit) to the corresponding platform directories
 
 
 
     /res/android/
-        ./libs/armeabi
-        ./libs/x86
-        ...
-        ./libs/nmdp_speech_kit.jar
+        ./libs/speechkit-2.2.1.aar
     ...
     
     /res/ios/frameworks/SpeechKit.framework/
