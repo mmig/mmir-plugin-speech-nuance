@@ -24,7 +24,7 @@ import com.nuance.speechkit.RecognitionException;
 public class NuanceEngine {
 
 	private static final String PLUGIN_NAME 	 = "NuanceEngine";
-	private static final String PLUGIN_TTS_NAME	 = "NuanceEngine.Vocalizer.Listener";
+	private static final String PLUGIN_TTS_NAME	 = "NuanceEngine.TTS";
 
 	private Session _speechSession;
 
@@ -351,19 +351,20 @@ public class NuanceEngine {
 		asrOpt.setLanguage(new Language(_currentLanguage));
 		
 		//TODO TEST
-		asrOpt.setResultDeliveryType(ResultDeliveryType.PROGRESSIVE);
+//		asrOpt.setResultDeliveryType(ResultDeliveryType.PROGRESSIVE);
 		
-		Audio start = _asrOpt.getStartEarcon();
-		Audio stop = _asrOpt.getStopEarcon();
-		Audio error = _asrOpt.getErrorEarcon();
-		Audio cancel = _asrOpt.getCancelEarcon();
-		if(isNoStartPrompt){
-			start = null;
-		}
-		if(isNoStopPrompt){
-			stop = null;
-		}
-		asrOpt.setEarcons(start, stop, error, cancel);
+		//DISABLED current version of v2.2.1 does not handle null-audio gracefully!
+//		Audio start = _asrOpt.getStartEarcon();
+//		Audio stop = _asrOpt.getStopEarcon();
+//		Audio error = _asrOpt.getErrorEarcon();
+//		Audio cancel = _asrOpt.getCancelEarcon();
+//		if(isNoStartPrompt){
+//			start = null;
+//		}
+//		if(isNoStopPrompt){
+//			stop = null;
+//		}
+//		asrOpt.setEarcons(start, stop, error, cancel);
 		
 		return asrOpt;
 	}
