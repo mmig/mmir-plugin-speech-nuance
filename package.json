@@ -26,7 +26,7 @@
   ],
   "engines": {
     "cordovaDependencies": {
-      "0.13.0": { "cordova-android": ">=4.0.0", "cordova": ">=6.4.0" }
+      "0.13.0": { "cordova-android": ">=4.0.0", "cordova-ios": ">=4.3.0", "cordova": ">=6.4.0" }
     }
   },
   "author": "russa",
