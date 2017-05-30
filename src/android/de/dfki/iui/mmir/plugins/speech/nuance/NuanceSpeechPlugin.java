@@ -37,6 +37,8 @@ import android.view.WindowManager;
 import de.dfki.iui.mmir.plugins.speech.nuance.Utils;
 
 public class NuanceSpeechPlugin extends CordovaPlugin {
+	private static final String LANGUAGE_MODEL_DICTATION = "dictation";
+	private static final String LANGUAGE_MODEL_SEARCH = "search";
 	private static final String PLUGIN_NAME = "NuancePlugin";
 	private static final String RECOGNITION_TYPE_FIELD_NAME = "type";
 	private static final String RECOGNITION_RESULT_FIELD_NAME = "result";
@@ -399,6 +401,56 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 	 */
 	private PluginResult recognize(JSONArray data,final CallbackContext callbackContext) {
 		
+		//DISABLED: invalid opition for recognize (only for startRecord)
+//		//2nd (OPTIONAL) argument: is suppress start-prompt?
+//		boolean isSuppressStartPrompt = false;
+//		if(data.length() > 1){
+//			try {
+//				isSuppressStartPrompt = data.getBoolean(1);
+//			} catch (JSONException e) {
+//				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 1) isSuppressStartPrompt from arguments-JSON: "+data, e);
+//			}
+//		}
+		
+		//3rd (OPTIONAL) argument: is use long-pause detection? (instead of default short-pause detection)
+		boolean isShortPauseDetection = true;
+		if(data.length() > 2){
+			try {
+				isShortPauseDetection = ! data.getBoolean(2);
+			} catch (JSONException e) {
+				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 2) useLongPauseDetection from arguments-JSON: "+data, e);
+			}
+		}
+		
+		//TODO impl. for Nuance library v2.x (when it gets supported...)
+		//     there is no parameter for v1.x Recognizer for this
+		//     ... for v1.x only the returned results could be limited, in the RecognizerListener, by not sending them to the JavaScript side ...
+		//4th (OPTIONAL) argument: max. result alternatives
+//		int maxAlternatives = -1;
+//		if(data.length() > 3){
+//			try {
+//				maxAlternatives = data.getInt(3);
+//			} catch (JSONException e) {
+//				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 3) maxAlternatives from arguments-JSON: "+data, e);
+//			}
+//		}
+		
+		//5th (OPTIONAL) argument: language model -> "dictation" (DEFAULT) | "search"
+		boolean isDictation = true;
+		if(data.length() > 4){
+			try {
+				//either "search" or "dictation"
+				String languageModel = data.getString(4);
+				if(LANGUAGE_MODEL_SEARCH.equals(languageModel)){
+					isDictation = false;
+				} else if(!LANGUAGE_MODEL_DICTATION.equals(languageModel)){
+					LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Error while extracting PARAM (at index 4) languageModel from arguments-JSON: unknown value, must be 'dictation' or 'search', but was '"+languageModel+"'");
+				}
+			} catch (JSONException e) {
+				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 4) languageModel from arguments-JSON: "+data, e);
+			}
+		}
+		
 		//NOTE: disabled because speechkit creates itself a new handle
 		//cordova.getThreadPool().execute(new Runnable() {
         //    public void run() {
@@ -407,7 +459,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
                 isCancelled = 	false;
                 isRecordingMoreThanOnce = false;
                 recognizer = createRecognitionHandler(callbackContext);
-                NuanceEngine.getInstance().recognize(recognizer, false);
+                NuanceEngine.getInstance().recognize(recognizer, isShortPauseDetection, isDictation, false);
         //    }
         //});
 		
@@ -436,57 +488,59 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 	 * 		a NO_RESULT PluginResult (set to keepCallback)
 	 */
 	private PluginResult recognize_no_eos_detection(JSONArray data,final CallbackContext callbackContext,final boolean withIntermediateResults) {
+
+		//2nd (OPTIONAL) argument: is suppress start-prompt?
+		boolean isSuppressStartPrompt = false;
+		if(data.length() > 1){
+			try {
+				isSuppressStartPrompt = data.getBoolean(1);
+			} catch (JSONException e) {
+				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 1) isSuppressStartPrompt from arguments-JSON: "+data, e);
+			}
+		}
 		
+		//3rd (OPTIONAL) argument: is use long-pause detection? (instead of default short-pause detection)
+		boolean isShortPauseDetection = true;
+		if(data.length() > 2){
+			try {
+				isShortPauseDetection = ! data.getBoolean(2);
+			} catch (JSONException e) {
+				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 2) useLongPauseDetection from arguments-JSON: "+data, e);
+			}
+		}
+		
+		//TODO impl. for Nuance library v2.x (when it gets supported...)
+		//     there is no parameter for v1.x Recognizer for this
+		//     ... for v1.x only the returned results could be limited, in the RecognizerListener, by not sending them to the JavaScript side ...
+		//4th (OPTIONAL) argument: max. result alternatives
+//		int maxAlternatives = -1;
+//		if(data.length() > 3){
+//			try {
+//				maxAlternatives = data.getInt(3);
+//			} catch (JSONException e) {
+//				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 3) maxAlternatives from arguments-JSON: "+data, e);
+//			}
+//		}
+		
+		//5th (OPTIONAL) argument: language model -> "dictation" (DEFAULT) | "search"
+		boolean isDictation = true;
+		if(data.length() > 4){
+			try {
+				//either "search" or "dictation"
+				String languageModel = data.getString(4);
+				if(LANGUAGE_MODEL_SEARCH.equals(languageModel)){
+					isDictation = false;
+				} else if(!LANGUAGE_MODEL_DICTATION.equals(languageModel)){
+					LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Error while extracting PARAM (at index 4) languageModel from arguments-JSON: unknown value, must be 'dictation' or 'search', but was '"+languageModel+"'");
+				}
+			} catch (JSONException e) {
+				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 4) languageModel from arguments-JSON: "+data, e);
+			}
+		}
+		
+		final boolean doUseDictationLanguageModel = isDictation;
 		
 		if (withIntermediateResults){
-			
-			//2nd (OPTIONAL) argument: is suppress start-prompt?
-			boolean isSuppressStartPrompt = false;
-			if(data.length() > 1){
-				try {
-					isSuppressStartPrompt = data.getBoolean(1);
-				} catch (JSONException e) {
-					LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 1) isSuppressStartPrompt from arguments-JSON: "+data, e);
-				}
-			}
-			
-			//3rd (OPTIONAL) argument: is use long-pause detection? (instead of default short-pause detection)
-			boolean isShortPauseDetection = true;
-			if(data.length() > 2){
-				try {
-					isShortPauseDetection = ! data.getBoolean(2);
-				} catch (JSONException e) {
-					LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 2) useLongPauseDetection from arguments-JSON: "+data, e);
-				}
-			}
-			
-			//TODO impl. for Nuance library v2.x
-			//     there is no parameter for v1.x Recognizer for this
-			//     ... for v1.x only the returned results could be limited, in the RecognizerListener, by not sending them to the JavaScript side ...
-//			//4th (OPTIONAL) argument: max. result alternatives
-//			int maxAlternatives = -1;
-//			if(data.length() > 3){
-//				try {
-//					maxAlternatives = data.getInt(3);
-//				} catch (JSONException e) {
-//					LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 3) maxAlternatives from arguments-JSON: "+data, e);
-//				}
-//			}
-			
-			//TODO impl. for Nuance library v2.x
-			//     there is no parameter for v1.x Recognizer for this
-//			//5th (OPTIONAL) argument: language model
-//			String languageModel = null;
-//			if(data.length() > 4){
-//				try {
-//					//either "search" or "dictation"
-//					languageModel = data.getString(4);
-//					//-> TODO convert to appropriate Nuance's language models
-//				} catch (JSONException e) {
-//					LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 4) languageModel from arguments-JSON: "+data, e);
-//				}
-//			}
-			
 			
 			final boolean doSuppressStartPrompt = isSuppressStartPrompt;
 			final boolean doUseShortPauseDetection = isShortPauseDetection;
@@ -502,7 +556,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
                     //mock "intermediate results mode" by recognition with EOS using short-pause detection
                     //     ... and restart recognition after each result (until stopRecording is triggered)
                     //NOTE restarting is handled by JavaScript side...
-					NuanceEngine.getInstance().recognize(recognizer, doUseShortPauseDetection, doSuppressStartPrompt);
+					NuanceEngine.getInstance().recognize(recognizer, doUseShortPauseDetection, doUseDictationLanguageModel, doSuppressStartPrompt);
 		//		}
 		//	});
 			
@@ -517,7 +571,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
                     isRecordingMoreThanOnce = true;
 
                     //use "real" non-EOS mode:
-					NuanceEngine.getInstance().recognizeWithNoEndOfSpeechDetection(recognizer);
+					NuanceEngine.getInstance().recognizeWithNoEndOfSpeechDetection(recognizer, doUseDictationLanguageModel);
 		//		}
 		//	});
 		}
