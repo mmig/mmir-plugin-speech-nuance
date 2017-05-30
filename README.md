@@ -37,7 +37,7 @@ execute the following command in Cordova project's root directory:
     cordova plugin add https://github.com/mmig/mmir-plugin-speech-nuance.git
 
 
-### From local copy of the repository (recommended)
+### From local copy of the repository (recommanded)
 
 (1) check out the repository into a local directory (or download its ZIP file and decompress it)
 
@@ -60,13 +60,17 @@ execute the following command in Cordova project's root directory:
 
 ## Nuance LIBRARIES AND CREDENTIALS
 
-You need to add the native libararies and resources from your the Dragon Mobile SDK into
-the plugin's `/res` directories.
+For using local libraries, You need to add/copy the native libraries and resources
+from your the Dragon Mobile SDK into the plugin's `/res` directory structure
+as follows:  
+__(for Android, un-zip the `*.aar` file and copy the decompressed `*.jar` file and the resources from `jni/**`)
 
 
     /res/android/
-        ./libs/
-        ./res/
+        ./libs/arm64-v8a
+        ./libs/armeabi
+        ...
+        ./libs/classes.jar
     ...
     
     /res/ios/frameworks/SpeechKit.framework/
@@ -74,7 +78,6 @@ the plugin's `/res` directories.
         ./Resources/
         ./SpeechKit
     ...
-
 
 ### Credentials via config.xml - FOR DEVELOPMENT ONLY
 
