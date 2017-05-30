@@ -16,7 +16,7 @@ import com.nuance.speechkit.RecognitionType;
 import com.nuance.speechkit.Session;
 import com.nuance.speechkit.Transaction;
 import com.nuance.speechkit.TransactionException;
-
+import com.nuance.speechkit.Voice;
 import com.nuance.speechkit.RecognitionException;
 
 
@@ -30,19 +30,17 @@ public class NuanceEngine {
 	private Transaction _ttsTransaction;
 
 	private Transaction.Listener _asrTransactionListener;
-	private Transaction _currentAsrTransaction;
+	private Transaction _asrTransaction;
+	private Transaction.Listener _ttsTransactionListener;
 	private String _currentLanguage = "eng-GBR";
+	private String _currentVoice = null;
+	private Transaction.Listener _currentVocalizerHandler;
 	private Transaction.Listener _currentRecognitionHandler;
-	private Transaction.Options _transOpt;
+	private Transaction.Options _asrOpt;
 	private Audio beepStart;
 	private Audio beepStop;
 
 	private Context _context;
-
-//	// Allow other activities to access the SpeechKit instance.
-//	public SpeechKit getSpeechKit() {
-//		return _speechKit;
-//	}
 
 	private static NuanceEngine instance;
 
@@ -92,16 +90,18 @@ public class NuanceEngine {
 		int beepResId = _context.getResources().getIdentifier("rawbeep", "raw", _context.getApplicationInfo().packageName);
 		beepStart =  new Audio(_context, beepResId, PCM_FORMAT);
 		beepStop =  new Audio(_context, beepResId, PCM_FORMAT);
-		_transOpt = new Transaction.Options();
-		_transOpt.setRecognitionType(RecognitionType.SEARCH);
-		_transOpt.setDetection(DetectionType.Short);
-		_transOpt.setLanguage(new Language(_currentLanguage));
+		_asrOpt = new Transaction.Options();
+		_asrOpt.setRecognitionType(RecognitionType.SEARCH);
+		_asrOpt.setDetection(DetectionType.Short);
+		_asrOpt.setLanguage(new Language(_currentLanguage));
 		// TODO: Keep an eye out for audio prompts not-working on the Android 2 or other 2.2 devices.
 		//					start,stop,error,cancel
-		_transOpt.setEarcons(beepStart,beepStop,null,null);
-		_transOpt.setAutoplay(false);
+		_asrOpt.setEarcons(beepStart,beepStop,null,null);
+		_asrOpt.setAutoplay(false);
 		
-		_speechSession.setDefaultOptions(_transOpt);
+		_ttsTransactionListener = createVocalizer();
+		
+		_speechSession.setDefaultOptions(_asrOpt);
 		_asrTransactionListener = createRecognitionListener();
 	}
 
@@ -114,7 +114,7 @@ public class NuanceEngine {
 				//if there is currently a callback-handler set: "simulate" a cancel event, notifying the callback that it
 				//												the speech engine is about to release its resources
 
-				/*_currentRecognitionHandler.onError(_currentAsrTransaction, new SpeechError() {
+				/*_currentRecognitionHandler.onError(_asrTransaction, new SpeechError() {
 					@Override
 					public String getSuggestion() {
 						return "Re-initialize the engine and its resources";
@@ -131,17 +131,19 @@ public class NuanceEngine {
 				});*/
 
 				//TODO PatBit api change
-				_currentRecognitionHandler.onError(_currentAsrTransaction, "simulated 'canceled' ", new RecognitionException("Simulated 'cancelded'"));
+				_currentRecognitionHandler.onError(_asrTransaction, "simulated 'canceled' ", new RecognitionException("Simulated 'cancelded'"));
 
 
 			}
 
-			_currentAsrTransaction = null;
+			_asrTransaction = null;
+			_ttsTransaction = null;
 			_currentRecognitionHandler = null;
+			_currentVocalizerHandler = null;
 
 			_asrTransactionListener = null;
+			_ttsTransactionListener = null;
 
-			_ttsTransaction = null;
 			(_speechSession.getAudioPlayer()).stop();
 			_speechSession = null;
 		}
@@ -151,14 +153,14 @@ public class NuanceEngine {
 		this.beepStop = null;
 		
 	}
-
+	
 	private Transaction.Listener createRecognitionListener() {
 		return new Transaction.Listener() {
 			@Override
 			public void onStartedRecording(Transaction transaction) {
 				Log.i(PLUGIN_NAME, "recoginition started with ID: " + transaction.getSessionID());
 
-				if(transaction.equals( _currentAsrTransaction)){
+				if(transaction.equals( _asrTransaction)){
 					Log.i(PLUGIN_NAME, "same transaction ");
 				}else{
 					Log.i(PLUGIN_NAME, " NOT same transaction ");
@@ -176,7 +178,7 @@ public class NuanceEngine {
 			public void onFinishedRecording(Transaction transaction) {
 				Log.i(PLUGIN_NAME, "recording finished for ID: " + transaction.getSessionID());
 
-				if(transaction.equals( _currentAsrTransaction)){
+				if(transaction.equals( _asrTransaction)){
 					Log.i(PLUGIN_NAME, "same transaction ");
 				}else{
 					Log.i(PLUGIN_NAME, " NOT same transaction ");
@@ -206,7 +208,7 @@ public class NuanceEngine {
 						e.toString(),
 						e.getClass().toString()));
 				
-				if(transaction.equals( _currentAsrTransaction)){
+				if(transaction.equals( _asrTransaction)){
 					Log.i(PLUGIN_NAME, "same transaction ");
 				}else{
 					Log.i(PLUGIN_NAME, " NOT same transaction ");
@@ -246,19 +248,15 @@ public class NuanceEngine {
 		};
 	}
 
-	public void speak(String text, boolean isSsml,final Object context) {
-
-		Transaction.Options options = new Transaction.Options();
-        options.setLanguage(new Language(_currentLanguage));
-        options.setAutoplay(true);
-
-		Transaction.Listener ttsTransactionListener = new Transaction.Listener() {
+	private Transaction.Listener createVocalizer(){
+		
+		return new Transaction.Listener() {
 			@Override
 		    public void onAudio(Transaction transaction, Audio audio){
 				Log.d(PLUGIN_TTS_NAME, String.format("start speaking"));
-
-				if(context instanceof Transaction.Listener){
-					((Transaction.Listener)context).onAudio(transaction, audio);
+	
+				if(_currentVocalizerHandler != null){
+					_currentVocalizerHandler.onAudio(transaction, audio);
 				}
 		    	
 		    }
@@ -267,9 +265,9 @@ public class NuanceEngine {
 		    public void onSuccess(Transaction transaction, String s){
 				// Use the context to determine if this was the final TTS phrase
 				Log.d(PLUGIN_TTS_NAME, String.format("speaking done: '%s'",s));
-
-				if(context instanceof Transaction.Listener){
-					((Transaction.Listener)context).onSuccess(transaction, s);
+	
+				if(_currentVocalizerHandler != null){
+					_currentVocalizerHandler.onSuccess(transaction, s);
 				}
 		    	
 		    }
@@ -277,18 +275,25 @@ public class NuanceEngine {
 		    public void onError(Transaction transaction, String s, TransactionException e){
 				// Use the context to determine if this was the final TTS phrase
 				Log.d(PLUGIN_TTS_NAME, String.format("speaking error: '%s'",s));
-
-				if(context instanceof Transaction.Listener){
-					((Transaction.Listener)context).onError(transaction, s, e);
+	
+				if(_currentVocalizerHandler != null){
+					_currentVocalizerHandler.onError(transaction, s, e);
 				}
 		    	
 		    }
 		};
+	}
+
+	public void speak(String text, boolean isSsml, final Transaction.Listener callback) {
+
+		Transaction.Options options = createTtsOptions();
+
+		_currentVocalizerHandler = callback;
 
 		if(isSsml)
-			_ttsTransaction = _speechSession.speakMarkup(text, options, ttsTransactionListener);
+			_ttsTransaction = _speechSession.speakMarkup(text, options, _ttsTransactionListener);
 		else
-			_ttsTransaction = _speechSession.speakString(text, options, ttsTransactionListener);
+			_ttsTransaction = _speechSession.speakString(text, options, _ttsTransactionListener);
 	}
 
 	public void recognize(Transaction.Listener callback, boolean shortPauseDetection) {
@@ -323,30 +328,49 @@ public class NuanceEngine {
 	private synchronized void doRecognize(final Transaction.Listener callback, DetectionType endOfSpeechRecognitionMode, boolean isNoStartPrompt , boolean isNoStopPrompt) {
 		//"singleton" recognition: only one recognition process at a time is allowed
 		//							--> ensure all previous processes are stopped.
-		if(_currentAsrTransaction != null){
+		if(_asrTransaction != null){
 			Log.d(PLUGIN_NAME, "cancel transaction -> still active while creating a new one");
-			_currentAsrTransaction.cancel();
+			_asrTransaction.cancel();
 		}
 		_currentRecognitionHandler = callback;
 
 
-		Transaction.Options options = new Transaction.Options();
-		options.setRecognitionType(RecognitionType.DICTATION);
-		options.setDetection(endOfSpeechRecognitionMode);//DetectionType.Short
-		options.setLanguage(new Language(_currentLanguage));//
+		Transaction.Options options = createAsrOptions(endOfSpeechRecognitionMode, RecognitionType.DICTATION, isNoStartPrompt, isNoStopPrompt);
 		
-		//TODO PatBit uncomment after testing
-		if(isNoStartPrompt){
-			//_transOpt.setEarcons(null,_transOpt.getStopEarcon(),null,null);
-		}
+		_asrTransaction = _speechSession.recognize(options, _asrTransactionListener);
+		Log.d(PLUGIN_NAME, "start transaction with id: " + _asrTransaction.getSessionID());
+		
+	}
 
-		if(isNoStopPrompt){
-			//_transOpt.setEarcons(_transOpt.getStartEarcon(),null,null,null);
+	private Transaction.Options createAsrOptions(DetectionType endOfSpeechRecognitionMode, RecognitionType recognitionType, boolean isNoStartPrompt, boolean isNoStopPrompt) {
+		Transaction.Options asrOpt = new Transaction.Options();
+		asrOpt.setRecognitionType(recognitionType);//RecognitionType.DICTATION);
+		asrOpt.setDetection(endOfSpeechRecognitionMode);//DetectionType.Short
+		asrOpt.setLanguage(new Language(_currentLanguage));//
+		
+		Audio start = _asrOpt.getStartEarcon();
+		Audio stop = _asrOpt.getStopEarcon();
+		Audio error = _asrOpt.getErrorEarcon();
+		Audio cancel = _asrOpt.getCancelEarcon();
+		if(isNoStartPrompt){
+			start = null;
 		}
+		if(isNoStopPrompt){
+			stop = null;
+		}
+		asrOpt.setEarcons(start, stop, error, cancel);
 		
-		_currentAsrTransaction = _speechSession.recognize(options, _asrTransactionListener);
-		Log.d(PLUGIN_NAME, "start transaction with id: " + _currentAsrTransaction.getSessionID());
-		
+		return asrOpt;
+	}
+
+	private Transaction.Options createTtsOptions() {
+		Transaction.Options ttsOpt = new Transaction.Options();
+		ttsOpt.setLanguage(new Language(_currentLanguage));
+		if(_currentVoice != null){
+			ttsOpt.setVoice(new Voice(_currentVoice));
+		}
+		ttsOpt.setAutoplay(true);
+		return ttsOpt;
 	}
 
 	public void stopRecording(final Transaction.Listener callback) {
@@ -356,10 +380,10 @@ public class NuanceEngine {
 				_currentRecognitionHandler = callback;
 			}
 			
-			if(_currentAsrTransaction == null){
+			if(_asrTransaction == null){
 				Log.w(PLUGIN_NAME, "stopRecording: no transaction there");
 			}
-			_currentAsrTransaction.stopRecording();
+			_asrTransaction.stopRecording();
 			Log.d(PLUGIN_NAME, "stopRecording: stopped recording");
 		} catch (Exception e){
 			Log.e(PLUGIN_NAME, "Error while trying to stop recognizing.", e);
@@ -370,11 +394,18 @@ public class NuanceEngine {
 		String newLang = (String) text;
 		if (!_currentLanguage.equals(newLang)){
 			_currentLanguage = newLang;
-			//_vocalizer.cancel();
-			if(_ttsTransaction != null){
-				_ttsTransaction.cancel();
-			}
-			//_vocalizer.setLanguage(newLang);
+			cancelSpeech();
+		}
+	}
+	
+	public void setVoice(Object text) {
+		String newVoice = (String) text;
+		if (
+				(_currentVoice == null && newVoice != null) ||
+				(_currentVoice != null && !_currentVoice.equals(newVoice))
+		){
+			_currentVoice = newVoice;
+			cancelSpeech();
 		}
 	}
 
@@ -390,11 +421,14 @@ public class NuanceEngine {
 	public void cancelSpeech() {
 		if(_ttsTransaction != null)
 			_ttsTransaction.cancel();
+		
+		if(_speechSession != null)
+			(_speechSession.getAudioPlayer()).stop();
 	}
 
 	public void cancelRecognition() {
-		if(_currentAsrTransaction != null)
-			_currentAsrTransaction.cancel();
+		if(_asrTransaction != null)
+			_asrTransaction.cancel();
 	}
 
 }

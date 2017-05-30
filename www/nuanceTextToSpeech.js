@@ -1,5 +1,5 @@
 /*
- * 	Copyright (C) 2012-2015 DFKI GmbH
+ * 	Copyright (C) 2012-2017 DFKI GmbH
  * 	Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
  * 	German Research Center for Artificial Intelligence
  * 	http://www.dfki.de
@@ -68,6 +68,21 @@ newMediaPlugin = {
 				var name = (_isLegacyMode? '' : 'mmirf/') + id;
 				return _mmir? _mmir.require(name) : require(name);
 			};
+			/**
+			 * HELPER for cofigurationManager.get() backwards compatibility (i.e. legacy mode)
+			 * 
+			 * @param {String|Array<String>} path
+			 * 			the path to the configuration value
+			 * @param {any} [defaultValue]
+			 * 			the default value, if there is no configuration value for <code>path</code>
+			 * 
+			 * @returns {any} the configuration value
+			 * 
+			 * @memberOf NuanceAndroidTextToSpeech#
+			 */
+			var _conf = function(path, defaultValue){
+				return _isLegacyMode? config.get(path, true, defaultValue) : config.get(path, defaultValue);
+			};
 			
 			/**
 			 * separator char for language- / country-code (specific to Nuance language config / codes)
@@ -86,6 +101,16 @@ newMediaPlugin = {
 			 * @memberOf NuanceAndroidTextToSpeech#
 			 */
 			var commonUtils = _req('commonUtils');
+			/** 
+			 * @type mmir.ConfigurationManager
+			 * @memberOf NuanceAndroidTextToSpeech#
+			 */
+			var config = _req('configurationManager');
+			/** 
+			 * @type mmir.Logger
+			 * @memberOf NuanceAndroidTextToSpeech#
+			 */
+			var logger = new _req('logger').create(_pluginName);
 			
 			/** 
 			 * @type NuancePlugin
@@ -101,6 +126,12 @@ newMediaPlugin = {
 					"TTS_BEGIN": "TTS_BEGIN",
 					"TTS_DONE": "TTS_DONE"
 			};
+
+			//set log-level from configuration (if there is setting)
+			var loglevel = _conf([_pluginName, 'logLevel']);
+			if(typeof loglevel !== 'undefined'){
+				logger.setLevel(loglevel);
+			}
 			
 			/** 
 			 * @type Function
@@ -117,7 +148,7 @@ newMediaPlugin = {
 							if(onStart){
 								onStart(msg.message);
 							} else {
-								console.debug('NuanceTTS.js: started.');//FIXME debug (use mediamanager's logger instead)
+								logger.debug('started.');
 							}
 						}
 						else if(msg.type === return_types.TTS_DONE){
@@ -125,7 +156,7 @@ newMediaPlugin = {
 							if(onEnd){
 								onEnd(msg.message);
 							} else {
-								console.debug('NuanceTTS.js: finished.');//FIXME debug (use mediamanager's logger instead)
+								logger.debug('finished.');
 							}
 						}
 					}
@@ -133,12 +164,12 @@ newMediaPlugin = {
 					if(isHandled === false) {
 						//DEFALT: treat callback-invocation as DONE callback
 						
-						console.warn('NuanceTTS.js: success-callback invoked without result / specific return-message.');//FIXME debug (use mediamanager's logger instead)
+						logger.warn('success-callback invoked without result / specific return-message.');
 						
 						if(onEnd){
 							onEnd();
 						} else {
-							console.debug('NuanceTTS.js: finished.');//FIXME debug (use mediamanager's logger instead)
+							logger.debug('finished.');
 						}
 					}
 				};
@@ -147,37 +178,100 @@ newMediaPlugin = {
 			//invoke the passed-in initializer-callback and export the public functions:
 			callBack({
 					/**
+					 * @deprecated use {@link #tts} instead
+					 * @memberOf NuanceAndroidTextToSpeech.prototype
+					 */
+					textToSpeech: function(){
+						return this.tts.apply(this, arguments);
+					},
+					/**
+					 * Synthesizes ("read out loud") text.
+	    			 * 
+	    			 * @param {String|Array<String>|PlainObject} [options] OPTIONAL
+	    			 * 		if <code>String</code> or <code>Array</code> of <code>String</code>s
+	    			 * 			  synthesizes the text of the String(s).
+	    			 * 			  <br>For an Array: each entry is interpreted as "sentence";
+	    			 * 				after each sentence, a short pause is inserted before synthesizing the
+	    			 * 				the next sentence<br>
+	    			 * 		for a <code>PlainObject</code>, the following properties should be used:
+	    			 * 		<pre>{
+	    			 * 			  text: String | String[], text that should be read aloud
+	    			 * 			, pauseDuration: OPTIONAL Number, the length of the pauses between sentences (i.e. for String Arrays) in milliseconds
+	    			 * 			, language: OPTIONAL String, the language for synthesis (if omitted, the current language setting is used)
+	    			 * 			, voice: OPTIONAL String, the voice (language specific) for synthesis; NOTE that the specific available voices depend on the TTS engine
+	    			 * 			, success: OPTIONAL Function, the on-playing-completed callback (see arg onPlayedCallback)
+	    			 * 			, error: OPTIONAL Function, the error callback (see arg failureCallback)
+	    			 * 			, ready: OPTIONAL Function, the audio-ready callback (see arg onReadyCallback)
+	    			 * 		}</pre>
+	    			 * 
+	    			 * @param {Function} [onPlayedCallback] OPTIONAL
+	    			 * 			callback that is invoked when the audio of the speech synthesis finished playing:
+	    			 * 			<pre>onPlayedCallback()</pre>
+	    			 * 
+	    			 * 			<br>NOTE: if used in combination with <code>options.success</code>, this argument will supersede the options
+	    			 * 
+	    			 * @param {Function} [failureCallback] OPTIONAL
+	    			 * 			callback that is invoked in case an error occurred:
+	    			 * 			<pre>failureCallback(error: String | Error)</pre>
+	    			 * 
+	    			 * 			<br>NOTE: if used in combination with <code>options.error</code>, this argument will supersede the options
+	    			 * 
+	    			 * @param {Function} [onReadyCallback] OPTIONAL
+	    			 * 			callback that is invoked when audio becomes ready / is starting to play.
+	    			 * 			If, after the first invocation, audio is paused due to preparing the next audio,
+	    			 * 			then the callback will be invoked with <code>false</code>, and then with <code>true</code>
+	    			 * 			(as first argument), when the audio becomes ready again, i.e. the callback signature is:
+	    			 * 			<pre>onReadyCallback(isReady: Boolean, audio: IAudio)</pre>
+	    			 * 
+	    			 * 			<br>NOTE: if used in combination with <code>options.ready</code>, this argument will supersede the options
+	    			 * 
 					 * @public
 					 * @memberOf NuanceAndroidTextToSpeech.prototype
 					 * @see mmir.MediaManager#textToSpeech
 					 */
-				    textToSpeech: function (parameter, successCallBack, failureCallBack, startCallBack){
+					tts: function (options, endCallBack, failureCallback, onReadyCallback){
+				    	
+						var isTextArray = commonUtils.isArray(options);
+						//convert first argument to options-object, if necessary
+						if(typeof options === 'string' || isTextArray){
+							
+							options = {text: options};
+						}
+						
+						if(endCallBack){
+							options.success = endCallBack;
+						}
+
+						if(failureCallback){
+							options.error = failureCallback;
+						}
+
+						if(onReadyCallback){
+							options.ready = onReadyCallback;
+						}
+						
+						options.language = options.language? options.language : languageManager.getLanguageConfig(_pluginName, 'language', _langSeparator);
+						options.pauseDuration = options.pauseDuration? options.pauseDuration : void(0);
+						options.voice = options.voice? options.voice : languageManager.getLanguageConfig(_pluginName, 'voice');
+				    	
 				    	try{
 				    		
-				    		var text;
-				    		if((typeof parameter !== 'undefined')&& commonUtils.isArray(parameter) ){
-				    			//TODO implement pausing similar to maryTextToSpeech.js (i.e. in JS code); use XML?
-				    			
-				    			text = parameter.join('\n\n');//FIXME may need 2 newlines here: in some cases the Nuance TTS does not make pause, when there is only 1 newline (why?!?...)
-				    			
-				    		}
-				    		else {
-				    			//FIXME implement evaluation / handling the parameter similar to treatment in maryTextToSpeech.js
-				    			text = parameter;
-				    		}
+				    		var text = options.text;
+				    		var lang = options.language;
 				    		
 					    	nuancePlugin.tts(
-					    			text,
-					    			languageManager.getLanguageConfig(_pluginName, 'language', _langSeparator),
-					    			//TODO get & set voice (API in plugin is missing for that ... currently...):
-					    			//languageManager.getLanguageConfig(_pluginName, 'voice'),
-					    			createSuccessWrapper(successCallBack, startCallBack), 
-					    			failureCallBack
+					    			text, lang,
+					    			createSuccessWrapper(options.success, options.ready),
+					    			options.error,
+					    			options.pauseDuration,
+					    			options.voice
 					    	);
 					    	
 				    	} catch(e){
-				    		if(failureCallBack){
-				    			failureCallBack(e);
+				    		if(options.error){
+				    			options.error(e);
+				    		} else {
+				    			logger.error(e);
 				    		}
 				    	}
 				    	

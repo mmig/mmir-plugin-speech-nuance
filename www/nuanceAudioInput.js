@@ -1,5 +1,5 @@
 ﻿/*
- * 	Copyright (C) 2012-2015 DFKI GmbH
+ * 	Copyright (C) 2012-2017 DFKI GmbH
  * 	Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
  * 	German Research Center for Artificial Intelligence
  * 	http://www.dfki.de
@@ -68,12 +68,39 @@ newMediaPlugin = {
 				var name = (_isLegacyMode? '' : 'mmirf/') + id;
 				return _mmir? _mmir.require(name) : require(name);
 			};
+			/**
+			 * HELPER for cofigurationManager.get() backwards compatibility (i.e. legacy mode)
+			 * 
+			 * @param {String|Array<String>} path
+			 * 			the path to the configuration value
+			 * @param {any} [defaultValue]
+			 * 			the default value, if there is no configuration value for <code>path</code>
+			 * 
+			 * @returns {any} the configuration value
+			 * 
+			 * @memberOf NuanceAndroidAudioInput#
+			 */
+			var _conf = function(path, defaultValue){
+				return _isLegacyMode? config.get(path, true, defaultValue) : config.get(path, defaultValue);
+			};
 			
 			/** 
 			 * @type mmir.LanguageManager
 			 * @memberOf NuanceAndroidAudioInput#
 			 */
 			var languageManager = _req('languageManager');
+
+			/** 
+			 * @type mmir.ConfigurationManager
+			 * @memberOf NuanceAndroidAudioInput#
+			 */
+			var config = _req('configurationManager');
+			
+			/** 
+			 * @type mmir.Logger
+			 * @memberOf NuanceAndroidAudioInput#
+			 */
+			var logger = new _req('logger').create(_pluginName);
 			
 			/** 
 			 * @type NuancePlugin
@@ -81,6 +108,12 @@ newMediaPlugin = {
 			 */
 			var nuancePlugin = window.cordova.plugins.nuanceSpeechPlugin;
 
+			/** @memberOf NuanceAndroidAudioInput# */
+			var DEFAULT_ALTERNATIVE_RESULTS = 1;
+
+			/** @memberOf NuanceAndroidAudioInput# */
+			var DEFAULT_LANGUAGE_MODEL = 'dictation';// 'dictation' | 'search'
+			
 			/**  @memberOf NuanceAndroidAudioInput# */
 			var id = 0;
 			/**  
@@ -148,7 +181,7 @@ newMediaPlugin = {
 			 * 
 			 * @see #max_error_retry
 			 * 
-			 * @memberOf AndroidAudioInput#
+			 * @memberOf NuanceAndroidAudioInput#
 			 */
 			var error_counter = 0;
 			
@@ -158,7 +191,7 @@ newMediaPlugin = {
 			 * 
 			 * @see #error_counter
 			 * 
-			 * @memberOf AndroidAudioInput#
+			 * @memberOf NuanceAndroidAudioInput#
 			 * @default 5
 			 */
 			var max_error_retry = 5;
@@ -193,12 +226,18 @@ newMediaPlugin = {
 					"RECORDING_DONE": 		"RECORDING_DONE"
 			};
 			
+			//set log-level from configuration (if there is setting)
+			var loglevel = _conf([_pluginName, 'logLevel']);
+			if(typeof loglevel !== 'undefined'){
+				logger.setLevel(loglevel);
+			}
+			
 			//backwards compatibility (pre v0.6.0)
 			if(!mediaManager._preparing){
-				mediaManager._preparing = function(name){console.warn(name + ' is preparing - NOTE: this is a stub-function. Overwrite MediaManager._preparing for setting custom implementation.');};
+				mediaManager._preparing = function(name){logger.warn(name + ' is preparing - NOTE: this is a stub-function. Overwrite MediaManager._preparing for setting custom implementation.');};
 			}
 			if(!mediaManager._ready){
-				mediaManager._ready     = function(name){console.warn(name + ' is ready - NOTE: this is a stub-function. Overwrite MediaManager._ready for setting custom implementation.');};
+				mediaManager._ready     = function(name){logger.warn(name + ' is ready - NOTE: this is a stub-function. Overwrite MediaManager._ready for setting custom implementation.');};
 			}
 
 			/**
@@ -241,13 +280,14 @@ newMediaPlugin = {
 			var call_callback_with_last_result = function(){
 				if(typeof last_result !== "undefined") {
 					if (currentSuccessCallback){
+						if(logger.isDebug()) logger.debug("last_result is " + JSON.stringify(last_result));
 						currentSuccessCallback.apply(mediaManager, last_result);
 						last_result = void(0);
 					} else {
-						console.error("nuanceAudioInput Error: No callback function defined for success.");
+						logger.error("No callback function defined for success.");
 					}
 				} else {
-					console.warn("nuanceAudioInput Warning: last_result is undefined.");
+					logger.info("last_result is undefined.");
 				}
 			};
 
@@ -260,10 +300,10 @@ newMediaPlugin = {
 			 * @private
 			 * @memberOf NuanceAndroidAudioInput#
 			 */
-			var successCallbackWrapper = function successCallbackWrapper (cb){
+			var successCallbackWrapper = function successCallbackWrapper (cb, options){
 				return (function (res){
 					
-//					console.log("nuanceAudioInput: " + JSON.stringify(res));//FIXM DEBUG
+//					logger.log(JSON.stringify(res));//FIXM DEBUG
 					
 					var asr_result = null;
 					var asr_score = -1;
@@ -314,10 +354,13 @@ newMediaPlugin = {
 							}
 
 							nuancePlugin.startRecord(
-									languageManager.getLanguageConfig(_pluginName),
-									successCallbackWrapper(currentSuccessCallback),
-									failureCallbackWrapper(currentFailureCallback),
-									intermediate_results
+									options.language,
+									successCallbackWrapper(currentSuccessCallback, options),
+									failureCallbackWrapper(currentFailureCallback, options),
+									intermediate_results,
+									options.eosPause === 'long',
+									options.results,
+									options.mode
 							);
 
 						} else {
@@ -325,12 +368,15 @@ newMediaPlugin = {
 //							last_result = [asr_result, asr_score, asr_type, asr_alternatives];
 
 //							nuancePlugin.startRecord(
-//								languageManager.getLanguageConfig(_pluginName),
-//								successCallbackWrapper(currentSuccessCallback),
-//								failureCallbackWrapper(currentFailureCallback),
-//								intermediate_results
+//								options.language,
+//								successCallbackWrapper(currentSuccessCallback, options),
+//								failureCallbackWrapper(currentFailureCallback, options),
+//								intermediate_results,
+//								options.eosPause === 'long',
+//								options.results,
+//								options.mode
 //							);
-//							console.warn("[NuanceAudioInput] Success - Repeat - Else\nType: " + asr_type+"\n"+JSON.stringify(res));
+//							logger.warn("Success - Repeat - Else\nType: " + asr_type+"\n"+JSON.stringify(res));
 						}
 
 					} else {
@@ -360,7 +406,7 @@ newMediaPlugin = {
 						if (cb){
 							cb(asr_result, asr_score, asr_type, asr_alternatives);
 						} else {
-							console.error("nuanceAudioInput Error: No callback function defined for success.");
+							logger.error("No callback function defined for success.");
 						}
 						
 					}
@@ -376,7 +422,7 @@ newMediaPlugin = {
 			 * @private
 			 * @memberOf NuanceAndroidAudioInput#
 			 */
-			var failureCallbackWrapper = function failureCallbackWrapper (cb){
+			var failureCallbackWrapper = function failureCallbackWrapper (cb, options){
 				return (function (res){
 					var error_code = -1;
 					var error_msg = "";
@@ -427,18 +473,21 @@ newMediaPlugin = {
 								
 								//no (serious) error, call voice recognition again
 								return nuancePlugin.startRecord(
-										languageManager.getLanguageConfig(_pluginName),
-										successCallbackWrapper(currentSuccessCallback),
-										failureCallbackWrapper(currentFailureCallback),
-										intermediate_results
+										options.language,
+										successCallbackWrapper(currentSuccessCallback, options),
+										failureCallbackWrapper(currentFailureCallback, options),
+										intermediate_results,
+										options.eosPause === 'long',
+										options.results,
+										options.mode
 								);
 								
 							}
 							else if (cb){
-								console.warn("nuanceAudioInput: Calling error callback (" + error_code + ": " + error_msg + ").");
+								logger.warn("Calling error callback (" + error_code + ": " + error_msg + ").");
 								cb(error_msg, error_code, error_suggestion);
 							} else {
-								console.error("nuanceAudioInput Error: No callback function defined for failure.");
+								logger.error("Error: No callback function defined for failure.");
 							}
 						} else {
 							
@@ -452,10 +501,13 @@ newMediaPlugin = {
 							
 							//no (serious) error, call voice recognition again
 							return nuancePlugin.startRecord(
-									languageManager.getLanguageConfig(_pluginName),
-									successCallbackWrapper(currentSuccessCallback),
-									failureCallbackWrapper(currentFailureCallback),
-									intermediate_results
+									options.language,
+									successCallbackWrapper(currentSuccessCallback, options),
+									failureCallbackWrapper(currentFailureCallback, options),
+									intermediate_results,
+									options.eosPause === 'long',
+									options.results,
+									options.mode
 							);
 						}
 						
@@ -463,10 +515,10 @@ newMediaPlugin = {
 						
 						// do no repeat, just call errorCallback
 						if (cb){
-							console.debug("nuanceAudioInput: Calling error callback (" + error_code + ").");
+							logger.debug("Calling error callback (" + error_code + ").");
 							cb(error_msg, error_code, error_suggestion, error_type);
 						} else {
-							console.error("nuanceAudioInput Error: No callback function defined for failure.");
+							logger.error("nuanceAudioInput Error: No callback function defined for failure.");
 						}
 					}
 				});
@@ -475,35 +527,110 @@ newMediaPlugin = {
 			//invoke the passed-in initializer-callback and export the public functions:
 			callBack ({
 				/**
+				 * Start speech recognition (without <em>end-of-speech</em> detection):
+				 * after starting, the recognition continues until {@link #stopRecord} is called.
+				 * 
+				 * @async
+				 * 
+				 * @param {PlainObject} [options] OPTIONAL
+				 * 		options for Automatic Speech Recognition:
+				 * 		<pre>{
+				 * 			  success: OPTIONAL Function, the status-callback (see arg statusCallback)
+				 * 			, error: OPTIONAL Function, the error callback (see arg failureCallback)
+				 * 			, language: OPTIONAL String, the language for recognition (if omitted, the current language setting is used)
+				 * 			, intermediate: OTPIONAL Boolean, set true for receiving intermediate results (NOTE not all ASR engines may support intermediate results)
+				 * 			, results: OTPIONAL Number, set how many recognition alternatives should be returned at most (NOTE not all ASR engines may support this option)
+				 * 			, mode: OTPIONAL "search" | "dictation", set how many recognition alternatives should be returned at most (NOTE not all ASR engines may support this option)
+				 * 			, eosPause: OTPIONAL "short" | "long", length of pause after speech for end-of-speech detection (NOTE not all ASR engines may support this option)
+				 * 			, disableImprovedFeedback: OTPIONAL Boolean, disable improved feedback when using intermediate results (NOTE not all ASR engines may support this option)
+				 * 		}</pre>
+				 * 
+				 * @param {Function} [statusCallback] OPTIONAL
+				 * 			callback function that is triggered when, recognition starts, text results become available, and recognition ends.
+				 * 			The callback signature is:
+				 * 				<pre>
+				 * 				callback(
+				 * 					text: String | "",
+				 * 					confidence: Number | Void,
+				 * 					status: "FINAL"|"INTERIM"|"INTERMEDIATE"|"RECORDING_BEGIN"|"RECORDING_DONE",
+				 * 					alternatives: Array<{result: String, score: Number}> | Void,
+				 * 					unstable: String | Void
+				 * 				)
+				 * 				</pre>
+				 * 			
+				 * 			Usually, for status <code>"FINAL" | "INTERIM" | "INTERMEDIATE"</code> text results are returned, where
+				 * 			<pre>
+				 * 			  "INTERIM": an interim result, that might still change
+				 * 			  "INTERMEDIATE": a stable, intermediate result
+				 * 			  "FINAL": a (stable) final result, before the recognition stops
+				 * 			</pre>
+				 * 			If present, the <code>unstable</code> argument provides a preview for the currently processed / recognized text.
+				 * 
+				 * 			<br>NOTE that when using <code>intermediate</code> mode, status-calls with <code>"INTERMEDIATE"</code> may
+				 * 			     contain "final intermediate" results, too.
+				 * 
+				 * 			<br>NOTE: if used in combination with <code>options.success</code>, this argument will supersede the options
+				 * 
+				 * @param {Function} [failureCallback] OPTIONAL
+				 * 			callback function that is triggered when an error occurred.
+				 * 			The callback signature is:
+				 * 				<code>callback(error)</code>
+				 * 
+				 * 			<br>NOTE: if used in combination with <code>options.error</code>, this argument will supersede the options
+				 * 
 				 * @public
 				 * @memberOf NuanceAndroidAudioInput.prototype
 				 * @see mmir.MediaManager#startRecord
 				 */
-				startRecord: function(successCallback, failureCallback, intermediateResults, isDisableImprovedFeedback, isUseLongPauseForIntermediate){
+//				startRecord: function(successCallback, failureCallback, intermediateResults, isDisableImprovedFeedback, isUseLongPauseForIntermediate){
+				startRecord: function(options, statusCallback, failureCallback, intermediateResults, isDisableImprovedFeedback, isUseLongPauseForIntermediate){
+					//argument intermediateResults is deprecated (use options.intermediate instead)
+					//argument isDisableImprovedFeedback is deprecated (use options.disableImprovedFeedback instead)
+					//argument isUseLongPauseForIntermediate is deprecated (use options.eosPause = 'long' instead)
 
-					currentFailureCallback = failureCallback;
-					currentSuccessCallback = successCallback;
+					if(typeof options === 'function'){
+						isDisableImprovedFeedback = intermediateResults;
+						intermediateResults = failureCallback;
+						failureCallback = statusCallback;
+						statusCallback = options;
+						options = void(0);
+					}
+					
+					if(!options){
+						options = {};
+					}
+					options.success = statusCallback? statusCallback : options.success;
+					options.error = failureCallback? failureCallback : options.error;
+					options.intermediate = typeof intermediateResults === 'boolean'? intermediateResults : !!options.intermediate;
+					options.language = options.language? options.language : languageManager.getLanguageConfig(_pluginName);
+					options.disableImprovedFeedback = typeof isDisableImprovedFeedback === 'boolean'? isDisableImprovedFeedback : !!options.disableImprovedFeedback;
+					options.results = options.results? options.results : DEFAULT_ALTERNATIVE_RESULTS;
+					options.mode = options.mode? options.mode : DEFAULT_LANGUAGE_MODEL;
+
+					options.eosPause = typeof isUseLongPauseForIntermediate === 'boolean'? (isUseLongPauseForIntermediate? 'long' : 'short') : options.eosPause;
+
+					
+					currentFailureCallback = options.error;
+					currentSuccessCallback = options.success;
+					
 					repeat = true;
 					error_counter = 0;
 					
-					// HACK: maybe there is a better way to determine intermediate_results with false as standard? similar to webkitAudioInput
-					intermediate_results = (intermediateResults === false) ? false : true;
+					intermediate_results = options.intermediate;
 					
 					//EXPERIMENTAL: allow disabling the improved feedback mode
-					if(isDisableImprovedFeedback === true){
-						disable_improved_feedback_mode = isDisableImprovedFeedback;
-					}
-					else {
-						disable_improved_feedback_mode = false;
-					}
+					disable_improved_feedback_mode = options.disableImprovedFeedback;
 
 					mediaManager._preparing(_pluginName);
 
 					nuancePlugin.startRecord(
-							languageManager.getLanguageConfig(_pluginName),
-							successCallbackWrapper(successCallback),
-							failureCallbackWrapper(failureCallback),
-							intermediate_results, isUseLongPauseForIntermediate
+							options.language,
+							successCallbackWrapper(options.success),
+							failureCallbackWrapper(options.error),
+							intermediate_results,
+							options.eosPause === 'long',
+							options.results,
+							options.mode
 					);
 				},
 				/**
@@ -511,28 +638,75 @@ newMediaPlugin = {
 				 * @memberOf NuanceAndroidAudioInput.prototype
 				 * @see mmir.MediaManager#stopRecord
 				 */
-				stopRecord: function(successCallback,failureCallback){
+				stopRecord: function(options, statusCallback, failureCallback){
+					
 					repeat = false;
+					
+					if(typeof options === 'function'){
+						failureCallback = statusCallback;
+						statusCallback = options;
+						options = void(0);
+					}
+					
+					if(!options){
+						options = {};
+					}
+					
+					options.success = statusCallback? statusCallback : options.success;
+					options.error = failureCallback? failureCallback : options.error;
+					
+					
 					nuancePlugin.stopRecord(
-							successCallbackWrapper(successCallback),
-							failureCallbackWrapper(failureCallback)
+							successCallbackWrapper(options.success, options),
+							failureCallbackWrapper(options.error, options)
 					);
 				},
 				/**
 				 * @public
 				 * @memberOf NuanceAndroidAudioInput.prototype
 				 * @see mmir.MediaManager#recognize
+				 * @see #startRecord
 				 */
-				recognize: function(successCallback,failureCallback){
+				recognize: function(options, statusCallback, failureCallback){
+					
+
+					if(typeof options === 'function'){
+						failureCallback = statusCallback;
+						statusCallback = options;
+						options = void(0);
+					}
+					
+					if(!options){
+						options = {};
+					}
+					options.success = statusCallback? statusCallback : options.success;
+					options.error = failureCallback? failureCallback : options.error;
+					options.intermediate = typeof intermediateResults === 'boolean'? intermediateResults : !!options.intermediate;
+					options.language = options.language? options.language : languageManager.getLanguageConfig(_pluginName) || DEFAULT_LANGUAGE;
+					options.disableImprovedFeedback = typeof isDisableImprovedFeedback === 'boolean'? isDisableImprovedFeedback : !!options.disableImprovedFeedback;
+					options.results = options.results? options.results : DEFAULT_ALTERNATIVE_RESULTS;
+					options.mode = options.mode? options.mode : DEFAULT_LANGUAGE_MODEL;
+
+					options.eosPause = typeof isUseLongPauseForIntermediate === 'boolean'? (isUseLongPauseForIntermediate? 'long' : 'short') : options.eosPause;
+
 					repeat = false;
 					error_counter = 0;
+
+					intermediate_results = options.intermediate;
+					
+					//EXPERIMENTAL: allow disabling the improved feedback mode
+					disable_improved_feedback_mode = options.disableImprovedFeedback;
 
 					mediaManager._preparing(_pluginName);
 
 					nuancePlugin.recognize(
-							languageManager.getLanguageConfig(_pluginName),
-							successCallbackWrapper(successCallback),
-							failureCallbackWrapper(failureCallback)
+							options.language,
+							successCallbackWrapper(options.success),
+							failureCallbackWrapper(options.error),
+							intermediate_results,
+							options.eosPause === 'long',
+							options.results,
+							options.mode
 					);
 				},
 				/**
