@@ -1,12 +1,16 @@
 repositories{    
   jcenter()
-  flatDir {
-      dirs 'libs'
-   }
+  
+  //ENABLE when using local AAR file & resources
+//  flatDir {
+//      dirs 'libs'
+//   }
 }
 
 dependencies {
-   compile(name:'speechkit-2.2.1', ext:'aar')
+  compile 'com.nuance:speechkit:2.1+@aar'
+  //ENABLE / use instead when using local AAR file & resources
+//  compile(name:'speechkit-2.2.1', ext:'aar')
 }
 
 android {
