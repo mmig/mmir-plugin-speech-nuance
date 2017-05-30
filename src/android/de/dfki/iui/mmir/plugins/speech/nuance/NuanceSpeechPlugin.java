@@ -538,6 +538,8 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 			}
 		}
 		
+		final boolean doUseDictationLanguageModel = isDictation;
+		
 		if (withIntermediateResults){
 			
 			final boolean doSuppressStartPrompt = isSuppressStartPrompt;
@@ -554,7 +556,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
                     //mock "intermediate results mode" by recognition with EOS using short-pause detection
                     //     ... and restart recognition after each result (until stopRecording is triggered)
                     //NOTE restarting is handled by JavaScript side...
-					NuanceEngine.getInstance().recognize(recognizer, doUseShortPauseDetection, isDictation, doSuppressStartPrompt);
+					NuanceEngine.getInstance().recognize(recognizer, doUseShortPauseDetection, doUseDictationLanguageModel, doSuppressStartPrompt);
 		//		}
 		//	});
 			
@@ -569,7 +571,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
                     isRecordingMoreThanOnce = true;
 
                     //use "real" non-EOS mode:
-					NuanceEngine.getInstance().recognizeWithNoEndOfSpeechDetection(recognizer, isDictation);
+					NuanceEngine.getInstance().recognizeWithNoEndOfSpeechDetection(recognizer, doUseDictationLanguageModel);
 		//		}
 		//	});
 		}
