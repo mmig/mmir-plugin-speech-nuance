@@ -159,14 +159,16 @@
          		(YOU SHOULD NOT upload these into a public repo!)
          -->
          
-   
+   		<!--
 		<framework src="res/ios/frameworks/SpeechKit.framework" custom="true"/>
         <framework src="AVFoundation.framework" />
         <framework src="CFNetwork.framework" />
         <framework src="Foundation.framework" />
         <framework src="Security.framework" />
         <framework src="UIKit.framework" />
-
+        -->
+        
+        <framework src="SpeechKit" type="podspec" spec="~> 2.2.2" />
 
     </platform>
     
