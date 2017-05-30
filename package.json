@@ -24,12 +24,11 @@
     "cordova-android",
     "cordova-ios"
   ],
-  "engines": [
-    {
-      "name": "dfki-mmir-plugin-speech-nuance",
-      "version": ">=5.0"
+  "engines": {
+    "cordovaDependencies": {
+      "0.13.0": { "cordova-android": ">=4.0.0", "cordova": ">=6.4.0" }
     }
-  ],
+  },
   "author": "russa",
   "license": "MIT",
   "bugs": {
