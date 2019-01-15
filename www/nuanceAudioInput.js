@@ -625,8 +625,8 @@ newMediaPlugin = {
 
 					nuancePlugin.startRecord(
 							options.language,
-							successCallbackWrapper(options.success),
-							failureCallbackWrapper(options.error),
+							successCallbackWrapper(options.success, options),
+							failureCallbackWrapper(options.error, options),
 							intermediate_results,
 							options.eosPause === 'long',
 							options.results,
@@ -701,8 +701,8 @@ newMediaPlugin = {
 
 					nuancePlugin.recognize(
 							options.language,
-							successCallbackWrapper(options.success),
-							failureCallbackWrapper(options.error),
+							successCallbackWrapper(options.success, options),
+							failureCallbackWrapper(options.error, options),
 							intermediate_results,
 							options.eosPause === 'long',
 							options.results,
