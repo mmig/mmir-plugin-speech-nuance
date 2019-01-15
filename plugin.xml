@@ -55,11 +55,14 @@
        
     <!-- android -->
     <platform name="android">
+    	
+    	<preference name="NUANCE_SPEECHKIT_VERSION" default="2.2+" />
 
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="NuanceSpeechPlugin" >
 		        <param name="android-package" value="de.dfki.iui.mmir.plugins.speech.nuance.NuanceSpeechPlugin" />
 		    </feature>
+    		<preference name="NUANCE_SPEECHKIT_VERSION" value="$NUANCE_SPEECHKIT_VERSION" />
         </config-file>
         
         <config-file target="AndroidManifest.xml" parent="/*">

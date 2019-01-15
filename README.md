@@ -34,7 +34,10 @@ https://nuancedev.github.io/samples/#phonegap
 
 execute the following command in Cordova project's root directory: 
 
+
     cordova plugin add https://github.com/mmig/mmir-plugin-speech-nuance.git
+    cordova plugin add https://github.com/mmig/mmir-plugin-speech-nuance.git --variable NUANCE_SPEECHKIT_VERSION=<version string, e.g. 2.2+>
+
 
 
 ### From local copy of the repository
@@ -63,7 +66,16 @@ execute the following command in Cordova project's root directory:
 By default, the `mmir-plugin-speech-nuance` plugin will use repositories/dependency
 managers for retrieving the Nuance SpeechKit libraries.
 
-Alternatively, the libraries can be included via locally stored files (see section below).
+Alternatively, the libraries can be included via locally stored files (see sections below).  
+
+### Version for Repository LIBRARY
+
+A specific version can be set by installing the plugin with the argument `--variable NUANCE_SPEECHKIT_VERSION=<version string>` (see installation section above).
+
+Or, after installation, the version can be specified by adding a `<preference>` entry to the the `config.xml`, e.g. for version string `"2.2+"`:  
+
+    <preference name="NUANCE_SPEECHKIT_VERSION" value="2.2+"/>
+
 
 ## Use local LIBRARIES
 
