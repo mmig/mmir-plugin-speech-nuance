@@ -87,10 +87,10 @@ public class NuanceEngine {
 		Log.d(PLUGIN_TTS_NAME, "start init resources...");
 
 		_speechSession = Session.Factory.session(_context, Credentials.getServerUri(), Credentials.getAppKey());
-		PcmFormat PCM_FORMAT = new PcmFormat(PcmFormat.SampleFormat.SignedLinear16, 16000, 1);
+		PcmFormat pcmFormat = new PcmFormat(PcmFormat.SampleFormat.SignedLinear16, 16000, 1);
 		int beepResId = _context.getResources().getIdentifier("rawbeep", "raw", _context.getApplicationInfo().packageName);
-		beepStart =  new Audio(_context, beepResId, PCM_FORMAT);
-		beepStop =  new Audio(_context, beepResId, PCM_FORMAT);
+		beepStart =  new Audio(_context, beepResId, pcmFormat);
+		beepStop =  new Audio(_context, beepResId, pcmFormat);
 		_asrOpt = new Transaction.Options();
 		_asrOpt.setRecognitionType(RecognitionType.SEARCH);
 		_asrOpt.setDetection(DetectionType.Short);

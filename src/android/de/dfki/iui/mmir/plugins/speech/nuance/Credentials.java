@@ -16,9 +16,9 @@ public class Credentials {
 	
 	public static final String NUANCE_APP_KEY 		= "nuanceAppKey";
 	public static final String NUANCE_APP_ID 		= "nuanceAppId";
-	public static final String NUANCE_CERT_DATA 	= "nuanceCertData";
-	public static final String NUANCE_CERT_SUMMARY 	= "nuanceCertSummary";
-	//public static final String NUANCE_SERVER_SSL 	= "nuanceServerSsl";
+//	public static final String NUANCE_CERT_DATA 	= "nuanceCertData";
+//	public static final String NUANCE_CERT_SUMMARY 	= "nuanceCertSummary";
+//	public static final String NUANCE_SERVER_SSL 	= "nuanceServerSsl";
 	public static final String NUANCE_SERVER_PORT 	= "nuanceServerPort";
 	public static final String NUANCE_SERVER_URL 	= "nuanceServerUrl";
 	public static final PcmFormat PCM_FORMAT = new PcmFormat(PcmFormat.SampleFormat.SignedLinear16, 16000, 1);
@@ -34,10 +34,10 @@ public class Credentials {
 	//private int port;
 	private String port;
 
-	/**
-	 * if SSL service is used or not
-	 */
-	//private boolean useSsl;
+//	/**
+//	 * if SSL service is used or not
+//	 */
+//	private boolean useSsl;
 
 	/**
 	 * the Nuance app ID
@@ -55,15 +55,15 @@ public class Credentials {
 	 */
 	public Uri serverUri;
 	
-	/**
-	 * the summary string for the cert data
-	 */
-	private String certSummary;
-	
-	/**
-	 * the certification data for strengthening the SSL encryption
-	 */
-	private String certData;
+//	/**
+//	 * the summary string for the cert data
+//	 */
+//	private String certSummary;
+//	
+//	/**
+//	 * the certification data for strengthening the SSL encryption
+//	 */
+//	private String certData;
 	
 	private static boolean isInit = false;
 	private static Credentials instance;
@@ -80,9 +80,9 @@ public class Credentials {
 		
 		this.serverUrl 		= prefs.getString(NUANCE_SERVER_URL, null);
 		this.port 			= prefs.getString(NUANCE_SERVER_PORT, null);//prefs.getInteger(NUANCE_SERVER_PORT, -1);
-		//this.useSsl	 		= prefs.getBoolean(NUANCE_SERVER_SSL, true);
-		this.certSummary 	= prefs.getString(NUANCE_CERT_SUMMARY, null);
-		this.certData		= prefs.getString(NUANCE_CERT_DATA, null);
+//		this.useSsl	 		= prefs.getBoolean(NUANCE_SERVER_SSL, true);
+//		this.certSummary 	= prefs.getString(NUANCE_CERT_SUMMARY, null);
+//		this.certData		= prefs.getString(NUANCE_CERT_DATA, null);
 		this.appId 			= prefs.getString(NUANCE_APP_ID, null);
 		this.appKey 		= parseKey(prefs.getString(NUANCE_APP_KEY, null));
 		this.serverUri		= Uri.parse("nmsps://" + this.appId + "@" + this.serverUrl + ":" + this.port);
@@ -131,31 +131,33 @@ public class Credentials {
 		return isInit;
 	}
 	
-/*	
-	public static String getSpeechKitServer() {
-		return instance.serverUrl;
-	}
-
-	public static int getSpeechKitPort() {
-		return instance.port;
-	}
-
-	public static boolean getSpeechKitSsl() {
-		return instance.useSsl;
-	}
-
-	public static String getSpeechKitAppId() {
-		return instance.appId;
-	}
-
-	public static byte[] getSpeechKitAppKey() {
-		return instance.appKey;
-	}
-*/
-	
-	public static String getSpeechKitCertSummary() {
-		return instance.certSummary;
-	}
+//	public static String getSpeechKitServer() {
+//		return instance.serverUrl;
+//	}
+//
+//	public static int getSpeechKitPort() {
+//		return instance.port;
+//	}
+//
+//	public static boolean getSpeechKitSsl() {
+//		return instance.useSsl;
+//	}
+//
+//	public static String getSpeechKitAppId() {
+//		return instance.appId;
+//	}
+//
+//	public static byte[] getSpeechKitAppKey() {
+//		return instance.appKey;
+//	}
+//	
+//	public static String getSpeechKitCertSummary() {
+//		return instance.certSummary;
+//	}
+//
+//	public static String getSpeechKitCertData() {
+//		return instance.certData;
+//	}
 	
 	public static Uri getServerUri() {
 		Log.d(PLUGIN_NAME,"Credentials get URI");
@@ -165,13 +167,6 @@ public class Credentials {
 	public static String getAppKey() {
 		Log.d(PLUGIN_NAME,"Credentials get appKey");
 		return instance.appKey;
-	}
-
-	/**
-	 * DISABLED: Nuance seems to provide the wrong cert data 
-	 */
-	public static String getSpeechKitCertData() {
-		return null;//FIXME: re-enable when usage of cert data is clear (Nuance doc is wrong ... or provides no working example): instance.certData;
 	}
 
 	/**
