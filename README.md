@@ -85,7 +85,7 @@ as follows:
 
 Then you need to edit the `plugin.xml` of the `mmir-plugin-speech-nuance` plugin:
  * __android:__
-   * enable entry for  
+   * enable entry for (and change version if necessary)  
      `<resource-file src="res/android/libs/speechkit-x.x.x.aar" target="libs/speechkit-x.x.x.aar" /`
    * and edit file `res/android/res/nuanceBuild.gradle` (see comments in file)
  * __ios:__
@@ -122,22 +122,11 @@ only contains "mock" data and will not work):
 
 <widget id="...
 
-    <preference name="nuanceAppKey" value="{ 
-		(byte)0x... <copy & paste your app key here, in Android/iOS/HTTP format>
-	}"/>
+    <preference name="nuanceAppKey" value="<HEX number: copy & paste your app key>"/>
     <preference name="nuanceAppId" value="NMDPTRIAL_...<copy & paste your app ID here>"/>
     <preference name="nuanceServerUrl" value="<copy & paste the server URL for the SpeechKit service>"/>
     <preference name="nuanceServerPort" value="<copy & paste the port number>"/>
-    <preference name="nuanceServerSsl" value="<use true, if you are using SSL>"/>
     
-    <!-- OPTIONAL (can be omitted)
-    		if SSL is used, this settings can be used for strengthening the encryption
-     -->
-    <preference name="nuanceCertSummary" value="<copy & paste the cert summary>"/>
-	 <!-- OPTIONAL (can be omitted)
-    		if SSL is used, this settings can be used for strengthening the encryption
-     -->
-    <!-- preference name="nuanceCertData" value="<copy & paste the cert data>"/-->
 ...
 </widget>
 ```
@@ -269,10 +258,11 @@ reference the checked-out project from this project:
 ----
 t.b.d.
 
-NOTE 1: for recognition interface (audio input) see the wiki's general [Speech Input API][2] 
-NOTE 2: the functions of this module are exported to the framework's [mmir.MediaManager][3])
+NOTE 1: for recognition interface (audio input) see the wiki's general [Speech Input API][2] and [Speech Output API][3]  
+NOTE 2: the functions of this module are exported to the framework's [mmir.media][4] module)
 
 
 [1]: https://github.com/mmig/mmir
 [2]: https://github.com/mmig/mmir/wiki/3.9.2-Speech-Processing-in-MMIR#speech-input-api
-[3]: https://mmig.github.io/mmir/api/symbols/mmir.MediaManager.html
+[3]: https://github.com/mmig/mmir/wiki/3.9.2-Speech-Processing-in-MMIR#speech-output-api
+[4]: https://mmig.github.io/mmir/api/symbols/mmir.MediaManager.html

@@ -40,15 +40,6 @@
     <!--preference name="nuanceAppKey" default="NOT_SET" /-->
     <!--preference name="nuanceServerUrl" default="NOT_SET" /-->
     <!--preference name="nuanceServerPort" default="443" /-->
-    <!--preference name="nuanceServerSsl" default="true" /-->
-    
-    <!-- optional preferences that MAY be set in Cordova's config.xml
-         in the project's root directory
-         
-         (NOTE these are disabled and included here only for documentation)
-     -->
-    <!-- preference name="nuanceCertSummary" default="NOT_SET" /-->
-    <!-- preference name="nuanceCertData" default="NOT_SET" /-->
 
     <js-module src="www/nuance.js" name="nuanceSpeechPlugin">
     	<clobbers target="window.cordova.plugins.nuanceSpeechPlugin" />
