@@ -26,12 +26,12 @@
 
 /**
  * part of Cordova plugin: dfki-mmir-plugin-speech-nuance
- * @version 0.13.0
+ * @version 0.13.1
  * @ignore
  */
 newMediaPlugin = {
 		/**  @memberOf NuanceAndroidTextToSpeech# */
-		initialize: function(callBack, mediaManager){
+		initialize: function(callBack, mediaManager, contextId){
 			
 			/**  @memberOf NuanceAndroidTextToSpeech# */
 			var _pluginName = 'nuanceTextToSpeech';
@@ -182,7 +182,7 @@ newMediaPlugin = {
 					 * @memberOf NuanceAndroidTextToSpeech.prototype
 					 */
 					textToSpeech: function(){
-						return this.tts.apply(this, arguments);
+						return mediaManager.perform(contextId, 'tts', arguments);
 					},
 					/**
 					 * Synthesizes ("read out loud") text.

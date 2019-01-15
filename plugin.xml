@@ -4,7 +4,7 @@
     xmlns="http://cordova.apache.org/ns/plugins/1.0"
 	xmlns:android="http://schemas.android.com/apk/res/android"
     id="dfki-mmir-plugin-speech-nuance"
-    version="0.13.0">
+    version="0.13.1">
 
     <name>NuanceSpeechPlugin</name>
     
@@ -101,34 +101,6 @@
             src="res/android/res/raw/rawbeep.wav"
             target-dir="res/raw" />
         
-        
-        <!-- Nucance libraries:
-         		
-         		put/copy the libraries from your Android Dragon Mobile SDK into your local repo
-         		(YOU SHOULD NOT upload these into a public repo!)
-         -->
-        <!--
-        <source-file
-            src="res/android/libs/classes.jar"
-            target-dir="libs" />
-        
-        <source-file
-            src="res/android/libs/armeabi/libdmt_speex.so"
-            target-dir="libs/armeabi" />
-            
-        <source-file
-            src="res/android/libs/armeabi-v7a/libdmt_speex.so"
-            target-dir="libs/armeabi-v7a" />
-        
-        <source-file
-            src="res/android/libs/arm64-v8a/libdmt_speex.so"
-            target-dir="libs/arm64-v8a" />
-        
-        <source-file
-            src="res/android/libs/x86/libdmt_speex.so"
-            target-dir="libs/x86" />
-         -->
-         
          
     <framework src="res/android/res/nuanceBuild.gradle" custom="true" type="gradleReference" />
 
