@@ -1,16 +1,24 @@
-repositories{    
+repositories{
+  maven {
+      url "https://jitpack.io"
+  }
   jcenter()
   
-  //ENABLE when using local AAR file & resources
+  
+  //ENABLE when using local AAR file & resources:
+//  flatDir {
+//      dirs 'src/main/libs'
+//  }
 //  flatDir {
 //      dirs 'libs'
-//   }
+//  }
+
 }
 
 dependencies {
-  compile 'com.nuance:speechkit:2.2+@aar'
-  //ENABLE / use instead when using local AAR file & resources
-//  compile(name:'speechkit-2.2.1', ext:'aar')
+  implementation 'com.nuance:speechkit:2.2+@aar'
+  //ENABLE / use instead of above line when using local AAR file & resources
+//  implementation(name:'speechkit-2.2.4', ext:'aar')
 }
 
 android {

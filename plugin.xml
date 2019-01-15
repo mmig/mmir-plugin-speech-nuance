@@ -107,7 +107,7 @@
 	<!-- ENABLE when using local AAR file & resources
 	            also see comments in res/android/res/nuanceBuild.gradle
 	-->
-    <!--resource-file src="res/android/libs/speechkit-2.2.1.aar" target="libs/speechkit-2.2.1.aar" /-->
+    <!--resource-file src="res/android/libs/speechkit-2.2.4.aar" target="libs/speechkit-2.2.4.aar" /-->
         
     </platform>
     
@@ -140,7 +140,7 @@
         <framework src="UIKit.framework" />
         -->
         
-        <framework src="SpeechKit" type="podspec" spec="~> 2.2.2" />
+        <framework src="SpeechKit" type="podspec" spec="~> 2.2.3" />
 
     </platform>
     
