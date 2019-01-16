@@ -17,24 +17,16 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 
-import com.nuance.speechkit.Audio;
-import com.nuance.speechkit.AudioPlayer;
-import com.nuance.speechkit.DetectionType;
-import com.nuance.speechkit.Language;
 import com.nuance.speechkit.Recognition;
-import com.nuance.speechkit.RecognitionType;
 import com.nuance.speechkit.RecognizedPhrase;
-import com.nuance.speechkit.RecognizedWord;
 
 
-import com.nuance.speechkit.Session;
 import com.nuance.speechkit.Transaction;
 import com.nuance.speechkit.TransactionException;
 
 
 import android.content.Context;
 import android.view.WindowManager;
-import de.dfki.iui.mmir.plugins.speech.nuance.Utils;
 
 public class NuanceSpeechPlugin extends CordovaPlugin {
 	private static final String LANGUAGE_MODEL_DICTATION = "dictation";
@@ -46,12 +38,12 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 	private static final String RECOGNITION_RESULT_SUGGESTION_FIELD_NAME = "suggestion";
 	private static final String ALTERNATIVE_RECOGNITION_RESULT_FIELD_NAME = "alternatives";
 	private static final String ASR_SHORT_PAUSE = "asr_short";
-	
 
-	private static final String TTS_TYPE_FIELD_NAME = "type";
-	private static final String TTS_DETAILS_FIELD_NAME = "message";
-	private static final String TTS_ERROR_CODE_FIELD_NAME = "code";
-	
+//
+//	private static final String TTS_TYPE_FIELD_NAME = "type";
+//	private static final String TTS_DETAILS_FIELD_NAME = "message";
+//	private static final String TTS_ERROR_CODE_FIELD_NAME = "code";
+
 	private static final String TTS = "tts";
 	private static final String ASR = "asr";
 	private static final String SET_LANGUAGE = "set_lang";
@@ -67,7 +59,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 	private static final String MIC_LEVEL_LISTENER = "setMicLevelsListener";
 
 	private static final String INIT_MESSAGE_CHANNEL = "msg_channel";
-	
+
     // isFinal is used for the calling of the callback of stopRecording -> if the user has stopped the recording, then
     // isStopped is set and at the "Done"-event isFinal is set to true.
     // So next time the result-event is called, we know it is the last result and the callback of stopRecording should be called
@@ -77,14 +69,14 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
     // this state-var (isRecordingMoreThanOnce) is used for the building of the summarized results for startRecording (and stopRecording)
     // because we only need to generate the summarized recordings if we count on more than one result (which is the case with recognize_no_eos_detection(), but not with recognize()).
     private static boolean isRecordingMoreThanOnce = false;
-    
+
 //    // maybe use this to create summarized result
 //    private StringBuilder recording_results = null;
-    
+
     //EXPERIMENTAL TODO add argument / parameter / config setting for this
     // -> prevents APP from pausing (ie. turning off screen) during speech-input
     private boolean isPreventPauseDuringRecognition = false;
-    
+
 
     //flag: if TRUE then "captureing" changes in the microphone levels is enabled
     //      (i.e. at leat one listener for microphone-levels-changed should be present)
@@ -97,12 +89,12 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         RECORDING_BEGIN,
         RECORDING_DONE
     }
-    
-    private static enum SpeakResultTypes {
-        TTS_BEGIN,
-        TTS_DONE,
-        TTS_ERROR
-    }
+
+//    private static enum SpeakResultTypes {
+//        TTS_BEGIN,
+//        TTS_DONE,
+//        TTS_ERROR
+//    }
 
     /**
      * Back-channel to JavaScript-side
@@ -132,10 +124,10 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 	}
 	@Override
 	public void onPause(boolean multitasking) {
-		
+
 		//TODO stopRecord(), in case that it is currently active?
 		NuanceEngine.getInstance().cancel();
-		
+
 		NuanceEngine.getInstance().releaseResources();
 		LOG.d(PLUGIN_NAME,"pausing...");
 		super.onPause(multitasking);
@@ -144,7 +136,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 	private void initNuanceEngine() {
 		this.initNuanceEngine(this.cordova.getActivity(), this.preferences);
 	}
-	
+
 	private void initNuanceEngine(Context context, CordovaPreferences prefs) {
 		boolean res = NuanceEngine.createInstance(context, prefs);
 		if(res)
@@ -153,7 +145,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 
     /**
      * sets flag for activity, so that while the app is running, the device won't go into standby
-     * 
+     *
      * @param doEnableWakeLock
      * 			if <code>true</code> the Window is set with FLAG_KEEP_SCREEN_ON,
      * 			if <code>false</code> the FLAG_KEEP_SCREEN_ON is removed.
@@ -176,7 +168,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 
     @Override
 	public boolean execute(String action, JSONArray data, CallbackContext callbackContext) {
-		
+
 		boolean isValidAction = true;
 		PluginResult result;
         result = null;
@@ -184,45 +176,45 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         initNuanceEngine();
 
 		if (TTS.equals(action)) {
-			
+
 			doSetLanguage(data, 1, action);
 			result = speak(data, callbackContext);
-			
+
 		} else if (ASR.equals(action)) {
-			
+
 			doSetLanguage(data, 0, action);
 			result = recognize(data, callbackContext);
-			
+
 		} else if (ASR_SHORT_PAUSE.equals(action)) {
-			
+
 			doSetLanguage(data, 0, action);
 			result = recognize_no_eos_detection(data, callbackContext, true);
-			
+
 		} else if (ASR_NO_EOS_DETECTION.equals(action)) {
-			
+
 			doSetLanguage(data, 0, action);
 			result = recognize_no_eos_detection(data, callbackContext, false);
-			
+
 		} else if (SET_LANGUAGE.equals(action)) {
-			
+
 			try {
 				result = setLanguage(data.getString(0));
 			}catch (Exception e){
 				LOG.e(PLUGIN_NAME, action+": Could not change Language", e);
 				result =  new PluginResult(Status.ERROR);
 			}
-			
+
 		} else if (STOP_REC.equals(action)) {
-			
+
 			result = stopRecording(callbackContext);
-			
+
 		} else if (CANCEL.equals(action)) {
 			//NOTE deprecated: should use CANCEL_RECOGNITION and/or CANCEL_SPEECH instead!
 			try{
 				cancel();
-				
+
 				//FIXME break backward-comp. and return OK in case of success!
-				
+
 				//BACKWARD COMPATABILITY (for Voice2Social App): return ERROR on cancel-success...
 				result = new PluginResult(Status.ERROR);
 			} catch (Exception e){
@@ -231,51 +223,51 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 				result = new PluginResult(Status.OK);
 			}
 		} else if (CANCEL_SPEECH.equals(action)) {
-			
+
 			try{
 				cancelSpeech();
-				
+
 				//NOTE no break backward-comp. --> returns OK in case of success
 				result = new PluginResult(Status.OK);
-				
+
 			} catch (Exception e){
 				LOG.e(PLUGIN_NAME, action+": Failed to cancel speech synthesis (TTS).", e);
 				result = new PluginResult(Status.ERROR);
 			}
 		} else if (CANCEL_RECOGNITION.equals(action)) {
-			
+
 			try{
 				cancelRecognition();
-				
+
 				//NOTE no break backward-comp. --> returns OK in case of success
 				result = new PluginResult(Status.OK);
-				
+
 			} catch (Exception e){
 				LOG.e(PLUGIN_NAME, action+": Failed to cancel recognition (ASR).", e);
 				result = new PluginResult(Status.ERROR);
 			}
 		}
 		else if (MIC_LEVEL_LISTENER.equals(action)){
-			
+
 			Boolean isEnable;
 			try {
 				isEnable = data.getBoolean(0);
 
 				isAudioLevelsRequested = isEnable;
-				
+
 				if(isAudioLevelsRequested && ! isStopped && recognizer != null){
 					recognizer.startStoringAudioLevels();
 				}
 				//NOTE if disabled: isAudioLevelsRequested is used in "polling thread" -> will automatically stop
-				
+
 				result = new PluginResult(Status.OK);
-				
+
 			} catch (JSONException e) {
 				String errMsg = action+": Could not change listen-to-microphone-levels: invalid or missing argument (need Boolean!).";
 				LOG.e(PLUGIN_NAME, errMsg, e);
 				result =  new PluginResult(Status.ERROR, errMsg + " " + e.toString());
 			}
-			
+
 		} else if (INIT_MESSAGE_CHANNEL.equals(action)) {
 
 			messageChannel = callbackContext;
@@ -286,30 +278,30 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 			result = new PluginResult(Status.INVALID_ACTION);
 			isValidAction = false;
 		}
-		
+
 		callbackContext.sendPluginResult(result);
 		return isValidAction;
 	}
-    
+
     /**
      * HELPER Set current language from JSON argument
-     * 
+     *
      * @param data
      * 			the JSON argument data
      * @param index
      * 			the index within the JSON argument data, which contains the language parameter
      * @param actionContext
-     * 			the action's name (i.e. during which action the language is set) - FOR DEBUGGING / ERROR LOG 
+     * 			the action's name (i.e. during which action the language is set) - FOR DEBUGGING / ERROR LOG
      * @return
      * 		boolean <code>true</code> if the language was set
      */
 	private boolean doSetLanguage(JSONArray data, int index, String actionContext) {
-		
+
 		if(data.length() < index){
 			LOG.w(PLUGIN_NAME, actionContext+": Failed to set language to: missing argument in "+data);
 			return false;
 		}
-		
+
 		try {
 			NuanceEngine.getInstance().setLanguage(data.getString(index));
 			return true;
@@ -318,26 +310,26 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 		}
 		return false;
 	}
-	
+
 	private String doGetLanguage(){
 		return NuanceEngine.getInstance().getLanguage();
 	}
-    
+
 	private PluginResult speak(JSONArray data, CallbackContext callbackContext){// String callbackId) {
 
 		try {
-			
+
 			String text = data.getString(0);
 			boolean isSsml = data.getBoolean(2);
-			
+
 			String voice = null;
 			if(data.length() > 3){
 				voice = data.getString(3);
 			}
-			
+
 			NuanceEngine.getInstance().setVoice(voice);
 			NuanceEngine.getInstance().speak(text, isSsml, createVocalizerHandler(callbackContext));
-			
+
 			PluginResult result;
 			if(callbackContext != null){
 				result = new PluginResult(Status.NO_RESULT);
@@ -346,7 +338,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 			else {
 				result = new PluginResult(Status.OK);
 			}
-			
+
 			return result;
 		} catch (JSONException e) {
 			LOG.e(PLUGIN_NAME, "Failed to synthesize text!", e);
@@ -354,12 +346,12 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 		}
 
 	}
-	
+
 	private String[] toArray(JSONArray arr) {
-		
+
 		int size=arr.length();
 		String[] array = new String[size];
-		
+
 		for(int i=0; i < size; ++i){
 			Object obj = null;
 			try {
@@ -368,18 +360,18 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+
 			String str;
 			if(obj == null || obj == JSONObject.NULL){
 				str = "";
 			} else {
 				str = obj.toString();
 			}
-			
+
 			array[i] = str;
-			
+
 		}
-		
+
 		return array;
 	}
 	private PluginResult setLanguage(String language) {
@@ -387,11 +379,11 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 		LOG.d(PLUGIN_NAME, "Language set to " + language);
 		return new PluginResult(Status.OK);
 	}
-	
+
 	/**
 	 * Start recognition with End-Of-Speech detection (using LONG_PAUSE); recognition
 	 * automatically stops after a pause is detected.
-	 * 
+	 *
 	 * @param data
 	 * 			additional data / arguments (CURRENTLY NOT USED)
 	 * @param callbackContext
@@ -400,7 +392,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 	 * 		a NO_RESULT PluginResult (set to keepCallback)
 	 */
 	private PluginResult recognize(JSONArray data,final CallbackContext callbackContext) {
-		
+
 		//DISABLED: invalid opition for recognize (only for startRecord)
 //		//2nd (OPTIONAL) argument: is suppress start-prompt?
 //		boolean isSuppressStartPrompt = false;
@@ -411,7 +403,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 //				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 1) isSuppressStartPrompt from arguments-JSON: "+data, e);
 //			}
 //		}
-		
+
 		//3rd (OPTIONAL) argument: is use long-pause detection? (instead of default short-pause detection)
 		boolean isShortPauseDetection = true;
 		if(data.length() > 2){
@@ -421,7 +413,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 2) useLongPauseDetection from arguments-JSON: "+data, e);
 			}
 		}
-		
+
 		//TODO impl. for Nuance library v2.x (when it gets supported...)
 		//     there is no parameter for v1.x Recognizer for this
 		//     ... for v1.x only the returned results could be limited, in the RecognizerListener, by not sending them to the JavaScript side ...
@@ -434,7 +426,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 //				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 3) maxAlternatives from arguments-JSON: "+data, e);
 //			}
 //		}
-		
+
 		//5th (OPTIONAL) argument: language model -> "dictation" (DEFAULT) | "search"
 		boolean isDictation = true;
 		if(data.length() > 4){
@@ -450,7 +442,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 4) languageModel from arguments-JSON: "+data, e);
 			}
 		}
-		
+
 		//NOTE: disabled because speechkit creates itself a new handle
 		//cordova.getThreadPool().execute(new Runnable() {
         //    public void run() {
@@ -462,17 +454,17 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
                 NuanceEngine.getInstance().recognize(recognizer, isShortPauseDetection, isDictation, false);
         //    }
         //});
-		
+
 		PluginResult returnValue = new PluginResult(Status.NO_RESULT);
 		returnValue.setKeepCallback(true);
 		return returnValue;
 	}
 
 	/**
-	 * Start recognition without End-Of-Speech detection (need to trigger stopRecording or cancel for ending recognition). 
-	 * 
+	 * Start recognition without End-Of-Speech detection (need to trigger stopRecording or cancel for ending recognition).
+	 *
 	 * The callbackContext may return multiple results, if <code>withIntermediateResults</code> is <code>true</code>.
-	 * 
+	 *
 	 * @param data
 	 * 			additional data:<br>
 	 * 			[0]: language code (String) NOTE this is set in {@link #execute(String, JSONArray, CallbackContext)}
@@ -498,7 +490,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 1) isSuppressStartPrompt from arguments-JSON: "+data, e);
 			}
 		}
-		
+
 		//3rd (OPTIONAL) argument: is use long-pause detection? (instead of default short-pause detection)
 		boolean isShortPauseDetection = true;
 		if(data.length() > 2){
@@ -508,7 +500,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 2) useLongPauseDetection from arguments-JSON: "+data, e);
 			}
 		}
-		
+
 		//TODO impl. for Nuance library v2.x (when it gets supported...)
 		//     there is no parameter for v1.x Recognizer for this
 		//     ... for v1.x only the returned results could be limited, in the RecognizerListener, by not sending them to the JavaScript side ...
@@ -521,7 +513,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 //				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 3) maxAlternatives from arguments-JSON: "+data, e);
 //			}
 //		}
-		
+
 		//5th (OPTIONAL) argument: language model -> "dictation" (DEFAULT) | "search"
 		boolean isDictation = true;
 		if(data.length() > 4){
@@ -537,14 +529,14 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 				LOG.e(PLUGIN_NAME, "recognize_no_eos_detection: Failed to extract PARAM (at index 4) languageModel from arguments-JSON: "+data, e);
 			}
 		}
-		
+
 		final boolean doUseDictationLanguageModel = isDictation;
-		
+
 		if (withIntermediateResults){
-			
+
 			final boolean doSuppressStartPrompt = isSuppressStartPrompt;
 			final boolean doUseShortPauseDetection = isShortPauseDetection;
-			
+
 		//	cordova.getThreadPool().execute(new Runnable() {
 		//		public void run() {
                     recognizer = 	createRecognitionHandler(callbackContext);
@@ -559,9 +551,9 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 					NuanceEngine.getInstance().recognize(recognizer, doUseShortPauseDetection, doUseDictationLanguageModel, doSuppressStartPrompt);
 		//		}
 		//	});
-			
+
 		} else {
-			
+
 		//	cordova.getThreadPool().execute(new Runnable() {
 		//		public void run() {
                     recognizer = 	createRecognitionHandler(callbackContext);
@@ -575,27 +567,27 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 		//		}
 		//	});
 		}
-		
-		LOG.d(PLUGIN_NAME, "Recoginition (with no End Of Speech Detection) started."); 
+
+		LOG.d(PLUGIN_NAME, "Recoginition (with no End Of Speech Detection) started.");
 		PluginResult returnValue = new PluginResult(Status.NO_RESULT);
 		returnValue.setKeepCallback(true);
 		return returnValue;
 	}
-	
+
 	private void cancel() {
         isCancelled = true;
 		NuanceEngine.getInstance().cancel();
 	}
-	
+
 	private void cancelSpeech() {
 		NuanceEngine.getInstance().cancelSpeech();
 	}
-	
+
 	private void cancelRecognition() {
         isCancelled = true;
 		NuanceEngine.getInstance().cancelRecognition();
 	}
-	
+
 	private PluginResult stopRecording(final CallbackContext callbackContext){
         isStopped = true;
         isFinal = false;
@@ -615,162 +607,167 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 
 			result = new PluginResult(Status.NO_RESULT);
 			result.setKeepCallback(true);
-			
+
 			LOG.d(PLUGIN_NAME, "Recording stopped");
-			
+
 		} catch (Exception e){
 			String msg =  "Stopping Recording failed.";
 			LOG.e(PLUGIN_NAME, msg, e);
 			result = new PluginResult(Status.ERROR, msg);
 		}
-		
+
 		return result;
 	}
-	
+
 
     //send mic-levels value to JavaScript side
     private void sendMicLevels(float levels){
-    	
+
     	PluginResult micLevels = new PluginResult(Status.OK, Utils.createMessage("action", "miclevels", "value", levels));
 		micLevels.setKeepCallback(true);
-		
+
 		messageChannel.sendPluginResult(micLevels);
     }
-	
-	private Transaction.Listener createVocalizerHandler(final CallbackContext callbackContext){//String id){
-		
-		return new Transaction.Listener() {
-			
-			@Override
-			public void onError(Transaction transaction, String s, TransactionException error) {
-				String msg = "Speech failed.";
-				
-	        	// 0: Unknown error,
-	        	// 1: ServerConnectionError,
-	        	// 2: ServerRetryError
-	        	// 3: RecognizerError,
-	        	// 4: VocalizerError,
-	        	// 5: CanceledError
-				
-				PluginResult result = null;
-				String eMessage = error.getMessage();
-				int errorcode = -1;
-				
-				if(eMessage.contains("retry")){
-					errorcode = 2;
-					LOG.i(PLUGIN_NAME, "retry error tts parsed");
-				}
-				
-				if(eMessage.contains("connection")){
-					errorcode = 1;
-					LOG.e(PLUGIN_NAME, "connection error tts parsed");
-				}
-				
-				if(eMessage.contains("canceled")){
-					errorcode = 5;
-					LOG.e(PLUGIN_NAME, "canceled error asr parsed");
-				}
 
-				msg = String.format(Locale.getDefault(),
-                        "An error occurred during TTS with id, (%s): %s",
-                        transaction.getSessionID(),
-                        s,
-                        error.getMessage());
-						result = new PluginResult(PluginResult.Status.ERROR, createResultObj(SpeakResultTypes.TTS_ERROR, msg, errorcode));
-					//}
-					
-				//TODO add utterance id/similar to result message?
-				
-				LOG.d(PLUGIN_NAME, msg);
-				
-				result.setKeepCallback(false);
-				callbackContext.sendPluginResult(result);
-			}
-			
-			@Override
-			public void onAudio(Transaction transaction, Audio audio){
-				String msg = "Speaking started for id: "  + transaction.getSessionID();
-				JSONObject beginResult = createResultObj(SpeakResultTypes.TTS_BEGIN, msg, -1);
-				//TODO add utterance id/similar to result message?
-				PluginResult result = null;
-				if(beginResult != null){
-					result = new PluginResult(PluginResult.Status.OK, beginResult);
-				} else {
-					result = new PluginResult(PluginResult.Status.OK, msg);
-				}
-				result.setKeepCallback(true);
-				callbackContext.sendPluginResult(result);
-				
-			}
+	private TTSListener createVocalizerHandler(final CallbackContext callbackContext){//String id){
 
-			@Override
-			//public void onSpeakingDone(Vocalizer vocalizer, String text, SpeechError error, Object context) {
-			public void onSuccess(Transaction transaction, String s){
-				String msg = "Speech finished for id: " + transaction.getSessionID();
-				
-				PluginResult result = null;
-				
-				
-				if(result == null){
-					
-					result = new PluginResult(PluginResult.Status.OK, createResultObj(SpeakResultTypes.TTS_DONE, msg, -1));
-					
-				}
-				
-				//TODO add utterance id/similar to result message?
-				
-				LOG.d(PLUGIN_NAME, msg);
-				
-				result.setKeepCallback(false);
-				callbackContext.sendPluginResult(result);
-			}
-			
-			private JSONObject createResultObj(SpeakResultTypes msgType, String msgDetails, int errorCode) {
-				try {
-					
-					JSONObject msg = new JSONObject();
-					msg.putOpt(TTS_TYPE_FIELD_NAME, msgType);
-					msg.putOpt(TTS_DETAILS_FIELD_NAME, msgDetails);
-					
-					if(msgType == SpeakResultTypes.TTS_ERROR){
-						msg.putOpt(TTS_ERROR_CODE_FIELD_NAME, errorCode);
-					}
-					
-					return msg;
-					
-				} catch (JSONException e) {
-					//this should never happen, but just in case: print error message
-					LOG.e(PLUGIN_NAME, "could not create '"+msgType+"' reply for message '"+msgDetails+"'", e);
-				}
-				return null;
-			}
-		};
+	  return new TTSListener(callbackContext);
+
+//		return new Transaction.Listener() {
+//
+//			@Override
+//			public void onError(Transaction transaction, String s, TransactionException error) {
+//				String msg = "Speech failed.";
+//
+//	        	// 0: Unknown error,
+//	        	// 1: ServerConnectionError,
+//	        	// 2: ServerRetryError
+//	        	// 3: RecognizerError,
+//	        	// 4: VocalizerError,
+//	        	// 5: CanceledError
+//
+//				PluginResult result = null;
+//				String eMessage = error.getMessage();
+//				int errorcode = -1;
+//
+//				if(eMessage.contains("retry")){
+//					errorcode = 2;
+//					LOG.i(PLUGIN_NAME, "retry error tts parsed");
+//				}
+//
+//				if(eMessage.contains("connection")){
+//					errorcode = 1;
+//					LOG.e(PLUGIN_NAME, "connection error tts parsed");
+//				}
+//
+//				if(eMessage.contains("canceled")){
+//					errorcode = 5;
+//					LOG.e(PLUGIN_NAME, "canceled error asr parsed");
+//				}
+//
+//				msg = String.format(Locale.getDefault(),
+//                        "An error occurred during TTS with id, (%s): %s",
+//                        transaction.getSessionID(),
+//                        s,
+//                        error.getMessage());
+//						result = new PluginResult(PluginResult.Status.ERROR, createResultObj(SpeakResultTypes.TTS_ERROR, msg, errorcode));
+//					//}
+//
+//				//TODO add utterance id/similar to result message?
+//
+//				LOG.d(PLUGIN_NAME, msg);
+//
+//				result.setKeepCallback(false);
+//				callbackContext.sendPluginResult(result);
+//			}
+//
+//			@Override
+//			public void onAudio(Transaction transaction, Audio audio){
+//				String msg = String.format("Speaking started for ID %s (audio %s)", transaction.getSessionID(), audio.hashCode());
+//				JSONObject beginResult = createResultObj(SpeakResultTypes.TTS_BEGIN, msg, -1);
+//				//TODO add utterance id/similar to result message?
+//				PluginResult result = null;
+//				if(beginResult != null){
+//					result = new PluginResult(PluginResult.Status.OK, beginResult);
+//				} else {
+//					result = new PluginResult(PluginResult.Status.OK, msg);
+//				}
+//
+//        LOG.d(PLUGIN_NAME, msg);
+//
+//				result.setKeepCallback(true);
+//				callbackContext.sendPluginResult(result);
+//
+//			}
+//
+//			@Override
+//			//public void onSpeakingDone(Vocalizer vocalizer, String text, SpeechError error, Object context) {
+//			public void onSuccess(Transaction transaction, String s){
+//				String msg = String.format("Speaking finished for ID %s", transaction.getSessionID());
+//
+//				PluginResult result = null;
+//
+//
+//				if(result == null){
+//
+//					result = new PluginResult(PluginResult.Status.OK, createResultObj(SpeakResultTypes.TTS_DONE, msg, -1));
+//
+//				}
+//
+//				//TODO add utterance id/similar to result message?
+//
+//				LOG.d(PLUGIN_NAME, msg + " -> '"+s+"'");
+//
+//				result.setKeepCallback(false);
+//				callbackContext.sendPluginResult(result);
+//			}
+//
+//			private JSONObject createResultObj(SpeakResultTypes msgType, String msgDetails, int errorCode) {
+//				try {
+//
+//					JSONObject msg = new JSONObject();
+//					msg.putOpt(TTS_TYPE_FIELD_NAME, msgType);
+//					msg.putOpt(TTS_DETAILS_FIELD_NAME, msgDetails);
+//
+//					if(msgType == SpeakResultTypes.TTS_ERROR){
+//						msg.putOpt(TTS_ERROR_CODE_FIELD_NAME, errorCode);
+//					}
+//
+//					return msg;
+//
+//				} catch (JSONException e) {
+//					//this should never happen, but just in case: print error message
+//					LOG.e(PLUGIN_NAME, "could not create '"+msgType+"' reply for message '"+msgDetails+"'", e);
+//				}
+//				return null;
+//			}
+//		};
 	}
-	
+
 	private ExtendedRecognizerListener createRecognitionHandler(final CallbackContext callbackContext) {
         return new ExtendedRecognizerListener(callbackContext);
     }
 
     class ExtendedRecognizerListener extends Transaction.Listener { //implements Recognition.Listener {
-    	
+
         private static final String JS_PLUGIN_ID = "dfki-mmir-plugin-speech-nuance.nuanceSpeechPlugin";
 		private static final String HANDLER_NAME = "NuanceEngine";
         private final long audioLevelResolution = 50l;//milliseconds (interval / delays for polling audio-levels from recognizer)
-        
+
 		private CallbackContext currentCallbackContext;
         private CallbackContext doneCallbackContext;
-        
+
         private Transaction currentRecognizer;
-        
+
         //for tracking recording state (i.e. when recording actually starts / stops)
         private boolean recording;
-        
+
         boolean isStoringAudioLevelsRunning;
 
         public ExtendedRecognizerListener(CallbackContext callbackContext){
             currentCallbackContext = callbackContext;
             doneCallbackContext = null;
-                        
+
             recording = false;
             isStoringAudioLevelsRunning = false;
         }
@@ -778,11 +775,11 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         @Override
         public void onStartedRecording(Transaction transaction){
             //TODO add callback for start-recording/-recognizing event (+ JavaScript)
-        	
+
         	if(isPreventPauseDuringRecognition){
         		setWakeLock(true);
         	}
-        	
+
             LOG.d(HANDLER_NAME, "RecordingBegin");
 
             JSONObject result = new JSONObject();
@@ -798,53 +795,52 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
             recBeginResult.setKeepCallback(true);
 
             currentCallbackContext.sendPluginResult(recBeginResult);
-            
+
             recording = true;
-            
-            //remember recognizer 
+
+            //remember recognizer
             // (we need this instance, if we want to store the audio levels during recording)
             currentRecognizer = transaction;
         	//if audio levels were already requested, start storing them now:
         	if(isAudioLevelsRequested)
         		startStoringAudioLevels();
-            
+
         }
 
         /**
          * HELPER start a process / thread for polling audio levels during recording
-         * 
-         * -> data is stored in {@link #data}
+         *
          */
 		private void startStoringAudioLevels() {
-			
+
 			if(!recording || currentRecognizer == null){
 				//remember that audio levels were requested:
 				// (start storing later, if possible -> see onRecordingBegin)
 				isAudioLevelsRequested = true;
 				return;
 			}
-			
+
 			if(isStoringAudioLevelsRunning){
 				return;
 			}
-			
+
 			isStoringAudioLevelsRunning = true;
-			
+
 			//TODO test if there is a more efficient way than using sleep (e.g. Android Timers?)
 			cordova.getThreadPool().execute(new Runnable(){
 
 				@Override
 				public void run() {
-					
+
 					while(recording && currentRecognizer != null && isAudioLevelsRequested){
-						
+
 						if(currentRecognizer != null){
 
 							//store audio level changes in DATA
 							storeAudioLevel(currentRecognizer.getAudioLevel());
-							
+
 						}
-						
+
 						try {
 							//TODO make the delay / sleep-duration an argument or config setting
 							Thread.sleep(audioLevelResolution);
@@ -852,19 +848,19 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 							e.printStackTrace();
 							LOG.e(PLUGIN_NAME, "pullMicAudioLevel-loop", e);
 						}
-						
+
 						isStoringAudioLevelsRunning = false;
 					}
 				}
-				
+
 			});
 		}
-        
+
         @Override
         public void onFinishedRecording(Transaction transaction) {
-        	 
+
         	recording = false;
-        	
+
             //TODO (?) add callback for finished-recording/start-recognizing event (+ JavaScript)
 //            LOG.d(HANDLER_NAME, "RecordingDone");
         	if(isPreventPauseDuringRecognition){
@@ -914,37 +910,37 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         	// 5: CanceledError
 			String eMessage = error.getMessage();
 			int errorcode = -1;
-			
+
 			if(eMessage.contains("retry")){
 				errorcode = 2;
 				LOG.i(PLUGIN_NAME, "retry error asr parsed");
 			}
-			
+
 			if(eMessage.contains("connection")){
 				errorcode = 1;
 				LOG.e(PLUGIN_NAME, "connection error asr parsed");
 			}
-			
+
 			if(eMessage.contains("canceled")){
 				errorcode = 5;
 				LOG.e(PLUGIN_NAME, "canceled error asr parsed");
 			}
-        	
-        	
-        	
+
+
+
         	String msg = String.format(Locale.getDefault(),
         			"An error occurred during recognition (isFinal %s | isStopped %s), message %s : %s",
         			isFinal, isStopped, error.getMessage(),	s);
 
         	LOG.e(HANDLER_NAME, msg);
-        	
-        	
+
+
         	String msgExceptiontype = String.format(Locale.getDefault(),
         			"Class of exception: %s",
         			(error.getClass()).toString());
-        	
+
         	LOG.e(HANDLER_NAME, msgExceptiontype);
-        	
+
 
         	try {
         		errorAsJSON.put("error_code", errorcode);
@@ -1001,13 +997,13 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
                 JSONObject recognitionResult = new JSONObject();
                 JSONArray alternativeResults = new JSONArray();
                 List<RecognizedPhrase> nBest = recognition.getDetails();
-                if(!(nBest == null)){ 
+                if(!(nBest == null)){
                     int i = 0;
                     for(RecognizedPhrase phrase : nBest) {
                     	if(i == 0){
                     		String text = phrase.getText();
                             double confidence = phrase.getConfidence();
-                            
+
                             recognitionResult.put(RECOGNITION_RESULT_FIELD_NAME, text);
                             recognitionResult.put(RECOGNITION_RESULT_SCORE_FIELD_NAME, confidence);
                             i++;
@@ -1015,12 +1011,12 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
                     	}
                         String text = phrase.getText();
                         double confidence = phrase.getConfidence();
-                        
+
                         JSONObject tmpResult = new JSONObject();
                         tmpResult.put(RECOGNITION_RESULT_FIELD_NAME, text);
                         tmpResult.put(RECOGNITION_RESULT_SCORE_FIELD_NAME, confidence);
                         alternativeResults.put(tmpResult);
-                        
+
                         i++;
                     }
                     recognitionResult.put(ALTERNATIVE_RECOGNITION_RESULT_FIELD_NAME, alternativeResults);
@@ -1135,12 +1131,12 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         private float _lastMicLevelVal = 0f;
     	private long _lastChangeNotification = -1l;
     	private LinkedList<Float> micLevels = new LinkedList<Float>();
-    	
+
     	private static final float CHANGE_THRESHOLD = 0.1f;
     	private static final long MIN_CHANGE_INTERVAL = 100l;
-    	
+
     	private void storeAudioLevel(float micLevelVal) {
-			
+
     		if(micLevels.size() > 0){
     			//only store value, if it has changed in comparison to the lastly stored value
     			if( Math.abs(micLevels.getLast() - micLevelVal) > CHANGE_THRESHOLD){
@@ -1153,11 +1149,11 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
     		} else {
     			micLevels.add(micLevelVal);
     		}
-    		
+
     		//use "temporal smoothing" for sending RMS changes
     		long currentTime = System.currentTimeMillis();
     		if(_lastChangeNotification == -1 || currentTime - _lastChangeNotification >= MIN_CHANGE_INTERVAL){
-    			
+
     			float min = Float.MAX_VALUE;
     			float max = Float.MIN_VALUE;
     			for(Float v : micLevels){
@@ -1168,7 +1164,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
     					max = v;
     				}
     			}
-    			
+
     			//select the value with the largest change (compared to last-sent-value)
     			float maxDiff, value;
     			float diffMin = Math.abs(_lastMicLevelVal - min);
@@ -1181,19 +1177,19 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
     				maxDiff = diffMax;
     				value = max;
     			}
-    			
+
     			//only send RMS change message, if difference is larger than the threshold
     			if(maxDiff > CHANGE_THRESHOLD){
-    				
+
 //    				LOG.i(HANDLER_NAME + "_" + id, "RMD Db changed (diff "+maxDiff+") "+_lastMicLevelVal +" -> " +value);
-    				
+
     				//reset / update values for "next round"
     				_lastMicLevelVal = value;
     				_lastChangeNotification = currentTime;
     				micLevels.clear();
-    				
+
     				NuanceSpeechPlugin.this.sendMicLevels(value);
-    			}	
+    			}
     		}
 		}
 
