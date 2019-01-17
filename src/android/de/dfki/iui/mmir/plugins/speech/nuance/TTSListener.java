@@ -14,6 +14,12 @@ import java.util.Locale;
 
 public class TTSListener extends Transaction.Listener {
 
+  private enum SpeakResultTypes {
+    TTS_BEGIN,
+    TTS_DONE,
+    TTS_ERROR
+  }
+
   private static final String TTS_TYPE_FIELD_NAME = "type";
   private static final String TTS_DETAILS_FIELD_NAME = "message";
   private static final String TTS_ERROR_CODE_FIELD_NAME = "code";
@@ -22,34 +28,25 @@ public class TTSListener extends Transaction.Listener {
 
   private CallbackContext callbackContext;
 
-
-  private static enum SpeakResultTypes {
-      TTS_BEGIN,
-      TTS_DONE,
-      TTS_ERROR
-  }
-
   private final Object transactionLock = new Object();
   private Transaction transaction;
+
+  private TTSPlayManager playManager;
 
   private Audio audio;
 
   private boolean canceled;
-  private boolean audioStarted;
-  private boolean audioStopped;
 
-  public TTSListener(CallbackContext callbackContext){
+  public TTSListener(CallbackContext callbackContext) {
     super();
     this.callbackContext = callbackContext;
     this.canceled = false;
-    this.audioStarted = false;
-    this.audioStopped = false;
   }
 
   @Override
   public void onError(Transaction transaction, String s, TransactionException error) {
 
-    if(canceled){
+    if (canceled) {
       //NOTE cancelation may trigger some errors which will be ignored
       LOG.d(PLUGIN_NAME, String.format("onError: already canceled (error %s, code %s, type %s)", s, error.getCode(), error.getType()));
       return;////////// EARLY EXIT ///////////////
@@ -66,17 +63,17 @@ public class TTSListener extends Transaction.Listener {
     String eMessage = error.getMessage();
     int errorcode = -1;
 
-    if(eMessage.contains("retry")){
+    if (eMessage.contains("retry")) {
       errorcode = 2;
       LOG.i(PLUGIN_NAME, "retry error tts parsed");
     }
 
-    if(eMessage.contains("connection")){
+    if (eMessage.contains("connection")) {
       errorcode = 1;
       LOG.e(PLUGIN_NAME, "connection error tts parsed");
     }
 
-    if(eMessage.contains("canceled")){
+    if (eMessage.contains("canceled")) {
       errorcode = 5;
       LOG.e(PLUGIN_NAME, "canceled error asr parsed");
     }
@@ -103,29 +100,31 @@ public class TTSListener extends Transaction.Listener {
   }
 
   @Override
-  public void onAudio(Transaction transaction, Audio audio){
+  public void onAudio(Transaction transaction, Audio audio) {
     setAudio(audio);
-//    sendOnBeginAudio(audio);//TODO should be triggered by audio-player
+    this.setTransaction(null);//FIXME !!must!! "disable" transaction when audio becomes available, so that it cannot be/is not canceled anymore, after the audio is present, otherwise the internal (Nuance) transaction manager may trigger fatal errors (espcially if multiple transactions were queued up)
+    sendOnReadyAudio(audio);
+    if(this.playManager != null){
+      playManager.playNext(transaction.getSession().getAudioPlayer());
+    } else {
+      LOG.e(PLUGIN_NAME, String.format("cannot play TTS for %s: TTSPLayerManger is null!", audio.hashCode()));
+    }
   }
 
   @Override
 //public void onSpeakingDone(Vocalizer vocalizer, String text, SpeechError error, Object context) {
-  public void onSuccess(Transaction transaction, String s){
+  public void onSuccess(Transaction transaction, String s) {
 //    sendOnFinshedAudio(this.audio);//FIXME must be triggered by audio-player
     this.setTransaction(null);
   }
 
-  public void sendOnBeginAudio(Audio audio){
+  public void sendOnReadyAudio(Audio audio) {
 
-    synchronized (transactionLock) {
-      this.audioStarted = true;
-    }
-
-    String msg = String.format("Speaking started for ");//, audio.hashCode());
+    String msg = String.format("Speaking ready for #%s", audio.hashCode());
     JSONObject beginResult = createResultObj(SpeakResultTypes.TTS_BEGIN, msg, -1);
     //TODO add utterance id/similar to result message?
     PluginResult result = null;
-    if(beginResult != null){
+    if (beginResult != null) {
       result = new PluginResult(PluginResult.Status.OK, beginResult);
     } else {
       result = new PluginResult(PluginResult.Status.OK, msg);
@@ -139,16 +138,12 @@ public class TTSListener extends Transaction.Listener {
 
   public void sendOnFinshedAudio(Audio audio) {
 
-    synchronized (transactionLock) {
-      this.audioStopped = true;
-    }
-
-    String msg = String.format("Speaking finished for ");//, audio != null? audio.hashCode() : "null");
+    String msg = String.format("Speaking finished for #%s", audio != null ? audio.hashCode() : "null");
 
     PluginResult result = null;
 
 
-    if(result == null){
+    if (result == null) {
 
       result = new PluginResult(PluginResult.Status.OK, createResultObj(SpeakResultTypes.TTS_DONE, msg, -1));
 
@@ -162,14 +157,16 @@ public class TTSListener extends Transaction.Listener {
     callbackContext.sendPluginResult(result);
   }
 
-
-//  public Transaction getTransaction() {
-//    return transaction;
-//  }
-
-  public void setTransaction(Transaction transaction) {
+  private void setTransaction(Transaction transaction) {
     synchronized (transactionLock) {
       this.transaction = transaction;
+    }
+  }
+
+  public void setResources(Transaction transaction, TTSPlayManager playManager) {
+    synchronized (transactionLock) {
+      this.transaction = transaction;
+      this.playManager = playManager;
     }
   }
 
@@ -177,35 +174,33 @@ public class TTSListener extends Transaction.Listener {
 
     synchronized (transactionLock) {
       this.canceled = true;
-      if(this.transaction != null){
+      if (this.transaction != null) {
 
-        if(!audioStarted && !audioStopped) {
-          this.transaction.cancel();
-        }
+        this.transaction.cancel();
 
-        if(this.audio != null){
-//          this.transaction.getSession().getAudioPlayer().dequeue(audio);
+        if (this.audio != null) {
+//          this.transaction.getSession().getAudioPlayer().dequeue(audio);// DISABLED: currently, audio is only enqueued just before starting to play it -> see TTSPlayManager
           this.audio = null;
         }
         this.transaction = null;
       }
     }
 
-    if(callbackContext != null && !callbackContext.isFinished()){
-      //class callback-context if necessary:
+    if (callbackContext != null && !callbackContext.isFinished()) {
+      //close callback-context if necessary:
       callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.NO_RESULT));
     }
   }
 
   public Audio getAudio() {
-    synchronized (transactionLock){
+    synchronized (transactionLock) {
       return audio;
     }
   }
 
   public void setAudio(Audio audio) {
     synchronized (transactionLock) {
-      if(audio == null || !canceled) {
+      if (audio == null || !canceled) {
         this.audio = audio;
       }
     }
@@ -224,7 +219,7 @@ public class TTSListener extends Transaction.Listener {
       msg.putOpt(TTS_TYPE_FIELD_NAME, msgType);
       msg.putOpt(TTS_DETAILS_FIELD_NAME, msgDetails);
 
-      if(msgType == SpeakResultTypes.TTS_ERROR){
+      if (msgType == SpeakResultTypes.TTS_ERROR) {
         msg.putOpt(TTS_ERROR_CODE_FIELD_NAME, errorCode);
       }
 
@@ -232,7 +227,7 @@ public class TTSListener extends Transaction.Listener {
 
     } catch (JSONException e) {
       //this should never happen, but just in case: print error message
-      LOG.e(PLUGIN_NAME, "could not create '"+msgType+"' reply for message '"+msgDetails+"'", e);
+      LOG.e(PLUGIN_NAME, "could not create '" + msgType + "' reply for message '" + msgDetails + "'", e);
     }
     return null;
   }
