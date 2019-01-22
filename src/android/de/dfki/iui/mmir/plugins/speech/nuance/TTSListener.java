@@ -48,7 +48,7 @@ public class TTSListener extends Transaction.Listener {
 
     if (canceled) {
       //NOTE cancelation may trigger some errors which will be ignored
-      LOG.d(PLUGIN_NAME, String.format("onError: already canceled (error %s, code %s, type %s)", s, error.getCode(), error.getType()));
+      LOG.d(PLUGIN_NAME, String.format("onError: already canceled (error %s)", s));
       return;////////// EARLY EXIT ///////////////
     }
 
@@ -79,11 +79,9 @@ public class TTSListener extends Transaction.Listener {
     }
 
     String msg = String.format(Locale.getDefault(),
-      "An error occurred during TTS with id %s: %s - %s (code %s, type %s)",
+      "An error occurred during TTS with id %s: %s",
       transaction.getSessionID(),
-      s,
-      error.getCode(),
-      error.getType()
+      s
     );
     result = new PluginResult(PluginResult.Status.ERROR, createResultObj(SpeakResultTypes.TTS_ERROR, msg, errorcode));
     //}
