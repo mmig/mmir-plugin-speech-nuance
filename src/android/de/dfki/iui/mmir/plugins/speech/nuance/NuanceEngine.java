@@ -46,28 +46,44 @@ public class NuanceEngine {
   }
 
   public static boolean createInstance(Context ctx, CordovaPreferences prefs) {
+	  
     boolean isRecreated = false;
     if (instance == null) {
+    	
       instance = new NuanceEngine(ctx, prefs);
       isRecreated = true;
+      
     } else if (ctx != instance._context) {
 
       instance.releaseResources();
 
       instance = new NuanceEngine(ctx, prefs);
       isRecreated = true;
+      
     } else if (!instance.isInitializedResources()) {
-      instance.initializeResources();
+    	
+	  if(Credentials.isValid(prefs)){
+	    instance.initializeResources();
+	  }
       isRecreated = true;
     }
 
     return isRecreated;
   }
+  
+  public static boolean releaseInstanceResource() {
+    if (instance == null) {
+      instance.releaseResources();
+      return true;
+    }
+    return false;
+  }
 
   protected NuanceEngine(Context ctx, CordovaPreferences prefs) {
     _context = ctx;
-    Credentials.init(prefs);
-    initializeResources();
+    if(Credentials.init(prefs)){
+    	initializeResources();
+    }
   }
 
   public boolean isInitializedResources() {

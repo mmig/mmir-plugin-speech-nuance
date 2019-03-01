@@ -16,9 +16,6 @@ public class Credentials {
 	
 	public static final String NUANCE_APP_KEY 		= "nuanceAppKey";
 	public static final String NUANCE_APP_ID 		= "nuanceAppId";
-//	public static final String NUANCE_CERT_DATA 	= "nuanceCertData";
-//	public static final String NUANCE_CERT_SUMMARY 	= "nuanceCertSummary";
-//	public static final String NUANCE_SERVER_SSL 	= "nuanceServerSsl";
 	public static final String NUANCE_SERVER_PORT 	= "nuanceServerPort";
 	public static final String NUANCE_SERVER_URL 	= "nuanceServerUrl";
 	public static final PcmFormat PCM_FORMAT = new PcmFormat(PcmFormat.SampleFormat.SignedLinear16, 16000, 1);
@@ -31,13 +28,7 @@ public class Credentials {
 	/**
 	 * the port number
 	 */
-	//private int port;
 	private String port;
-
-//	/**
-//	 * if SSL service is used or not
-//	 */
-//	private boolean useSsl;
 
 	/**
 	 * the Nuance app ID
@@ -47,23 +38,12 @@ public class Credentials {
 	/**
 	 * the Nuance app key
 	 */
-	//private byte[] appKey;
 	private String appKey;
 
 	/**
 	 * the Nuance uri
 	 */
 	public Uri serverUri;
-	
-//	/**
-//	 * the summary string for the cert data
-//	 */
-//	private String certSummary;
-//	
-//	/**
-//	 * the certification data for strengthening the SSL encryption
-//	 */
-//	private String certData;
 	
 	private static boolean isInit = false;
 	private static Credentials instance;
@@ -74,41 +54,47 @@ public class Credentials {
 	 * 			the preference values form config.xml with the configuration/credentials
 	 * 			for the Nuance SpeechKit service
 	 * 
-	 * @throws RuntimeError if prefs is missing require Nuance configuration/credential values
 	 */
 	protected Credentials(CordovaPreferences prefs) throws RuntimeException {
 		
 		this.serverUrl 		= prefs.getString(NUANCE_SERVER_URL, null);
-		this.port 			= prefs.getString(NUANCE_SERVER_PORT, null);//prefs.getInteger(NUANCE_SERVER_PORT, -1);
-//		this.useSsl	 		= prefs.getBoolean(NUANCE_SERVER_SSL, true);
-//		this.certSummary 	= prefs.getString(NUANCE_CERT_SUMMARY, null);
-//		this.certData		= prefs.getString(NUANCE_CERT_DATA, null);
+		this.port 			= prefs.getString(NUANCE_SERVER_PORT, null);
 		this.appId 			= prefs.getString(NUANCE_APP_ID, null);
 		this.appKey 		= parseKey(prefs.getString(NUANCE_APP_KEY, null));
 		this.serverUri		= Uri.parse("nmsps://" + this.appId + "@" + this.serverUrl + ":" + this.port);
 		
 		Log.d(PLUGIN_NAME,"Credentials created ...");
-		
-		RuntimeException ex = verify(prefs);
-		if(ex != null){
-			throw ex;//TODO add mechanism, so that erroneous credentials will be signald in NuanceEngine/Plugin (e.g. store error-message and query Credentials for the error before trying to access Nuance service)
-		}
 	}
 
-	private RuntimeException verify(CordovaPreferences prefs){
+	private String verify(CordovaPreferences prefs, boolean withDetails){
 		
 		String err = "";
+		
 		if(this.serverUrl == null){
+			
+			if(!withDetails) return err;
+			
 			err += NUANCE_SERVER_URL+"  is missing! "; 
 		}
-		//if(this.port == -1){
+		
 		if(this.port == null){
+			
+			if(!withDetails) return err;
+			
 			err += NUANCE_SERVER_PORT+"  is missing! "; 
 		}
+		
 		if(this.appId == null){
+			
+			if(!withDetails) return err;
+			
 			err += NUANCE_APP_ID+"  is missing! "; 
 		}
+		
 		if(this.appKey == null){
+			
+			if(!withDetails) return err;
+			
 			String keyVal = prefs.getString(NUANCE_APP_KEY, null);
 			if(keyVal != null)
 				err += NUANCE_APP_KEY+"  has wrong data: \""+keyVal+"\" ";
@@ -116,48 +102,51 @@ public class Credentials {
 				err += NUANCE_APP_KEY+"  is missing! ";
 		}
 		
+		//ASSERT withDetails == false || <no errors>
 		if(err.length() > 0){
-			return new RuntimeException("Missing config.xml preferences value(s): "+err);
+			return "Missing config.xml preferences value(s): "+err;
 		}
+		
 		return null;
 	}
 	
-	public static void init(CordovaPreferences prefs){
-		isInit = true;
+	/**
+	 * 
+	 * @param prefs
+	 * @return TRUE if prefs is missing some of the required Nuance configuration/credential values
+	 * 
+	 * @see valid
+	 */
+	public static boolean init(CordovaPreferences prefs){
 		instance = new Credentials(prefs);
+		if(instance.verify(prefs, false) != null){
+			return false;
+		}
+		isInit = true;
+		return true;
 	}
 	
 	public static boolean isInitialized(){
 		return isInit;
 	}
 	
-//	public static String getSpeechKitServer() {
-//		return instance.serverUrl;
-//	}
-//
-//	public static int getSpeechKitPort() {
-//		return instance.port;
-//	}
-//
-//	public static boolean getSpeechKitSsl() {
-//		return instance.useSsl;
-//	}
-//
-//	public static String getSpeechKitAppId() {
-//		return instance.appId;
-//	}
-//
-//	public static byte[] getSpeechKitAppKey() {
-//		return instance.appKey;
-//	}
-//	
-//	public static String getSpeechKitCertSummary() {
-//		return instance.certSummary;
-//	}
-//
-//	public static String getSpeechKitCertData() {
-//		return instance.certData;
-//	}
+	/**
+	 * side effects: creates Credentials instance from prefs, if not yet created
+	 */
+	public static boolean isValid(CordovaPreferences prefs){
+		if(instance == null)
+			init(prefs);
+		return instance.verify(prefs, false) == null;
+	}
+
+	/**
+	 * side effects: creates Credentials instance from prefs, if not yet created
+	 */
+	public static String validationErrors(CordovaPreferences prefs){
+		if(instance == null)
+			init(prefs);
+		return instance.verify(prefs, true);
+	}
 	
 	public static Uri getServerUri() {
 		Log.d(PLUGIN_NAME,"Credentials get URI");

@@ -57,6 +57,8 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 
   private static final String MIC_LEVEL_LISTENER = "setMicLevelsListener";
 
+  private static final String SET_CREDENTIALS = "credentials";
+
   private static final String INIT_MESSAGE_CHANNEL = "msg_channel";
 
   // isFinal is used for the calling of the callback of stopRecording -> if the user has stopped the recording, then
@@ -262,6 +264,31 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
         result = new PluginResult(Status.ERROR, errMsg + " " + e.toString());
       }
 
+    } else if(SET_CREDENTIALS.equals(action)) {
+    	
+    	try {
+    		
+	    	CordovaPreferences prefs = this.preferences;
+
+	    	//[appId, appKey, baseUrl, port]
+	    	prefs.set(Credentials.NUANCE_APP_ID,      data.optString(0));
+	    	prefs.set(Credentials.NUANCE_APP_KEY,     data.optString(1));
+	    	prefs.set(Credentials.NUANCE_SERVER_URL,  data.optString(2));
+	    	prefs.set(Credentials.NUANCE_SERVER_PORT, data.optString(3));
+	    	
+	    	Credentials.init(prefs);
+	    	
+	    	//force re-initialization
+	    	NuanceEngine.releaseInstanceResource();
+	    	NuanceEngine.getInstance();
+	    	
+	    	result = new PluginResult(Status.OK);
+	    	
+    	} catch(Exception e){
+            LOG.e(PLUGIN_NAME, action + ": Failed to set credentials.", e);
+            result = new PluginResult(Status.ERROR, e.getMessage());
+    	}
+    	
     } else if (INIT_MESSAGE_CHANNEL.equals(action)) {
 
       messageChannel = callbackContext;

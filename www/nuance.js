@@ -39,20 +39,49 @@ var NuancePlugin = function() {
 	this.__micListener = [];
 	//current language setting, DEFAULT: eng-GBR
 	this._currentLanguage = 'eng-GBR';
+	//if init was already invoked
+	this._init = false;
 };
 
 /**
- * @deprecated not necessary any more (initialization is handled internally), but may trigger failure-callback!
+ * initialize the Nuance plugin by setting the credentials for the SpeechKit service (may also be set via Cordova's config.xml, see README).
+ * 
+ * NOTE: if called multiple times, successive invocations will be ignored, use {@link #setCredentials} instead
+ *  
+ * @see #setCredentials
+ */
+NuancePlugin.prototype.init = function(credentials, successCallback, failureCallback) {
+	
+	if(this._init){
+		return;/////////////EARLY EXIT //////////////////
+	}
+	this._init = true;
+	this.setCredentials(credentials, successCallback, failureCallback);
+};
+
+/**
+ * set credentials for Nuance SpeechKit service
+ * 
+ * @param {Credentials} credentials the credentials/configuration for the Nuance SpeechKit service
+ * 							credentials.appId: {String} the app ID, e.g. "NMDPTRIAL_...
+ * 							credentials.appKey: {String} the app key, a HEX number "4b34a398...
+ * 							credentials.baseUrl: {String} OPTIONAL the domain URL for SpeechKit service, DEFAULT: "sslsandbox-nmdp.nuancemobility.net"
+ * 							credentials.port: {String|Number} OPTIONAL the port for SpeechKit service, DEFAULT: "443"
  * 
  */
-NuancePlugin.prototype.init = function(successCallback, failureCallback) {
-
+NuancePlugin.prototype.setCredentials = function(credentials, successCallback, failureCallback) {
 	
+	if(typeof credentials.port === 'number'){
+		//convert to string:
+		credentials.port = '' + credentials.port;
+	}
+	
+	var args = [credentials.appId, credentials.appKey, credentials.baseUrl || 'sslsandbox-nmdp.nuancemobility.net', credentials.port || '443'];
     return exec(successCallback,
     					 failureCallback,
     					 'NuanceSpeechPlugin',
-    					 'init',
-    					 []);
+    					 'credentials',
+    					 args);
 };
 
 NuancePlugin.prototype.tts = function(text, language, successCallback, failureCallback, pauseDuration, voice){
