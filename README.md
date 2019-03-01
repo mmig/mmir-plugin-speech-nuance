@@ -35,8 +35,9 @@ https://nuancedev.github.io/samples/#phonegap
 execute the following command in Cordova project's root directory: 
 
 
-    cordova plugin add https://github.com/mmig/mmir-plugin-speech-nuance.git
-    cordova plugin add https://github.com/mmig/mmir-plugin-speech-nuance.git --variable NUANCE_SPEECHKIT_VERSION=<version string, e.g. 2.2+>
+    cordova plugin add git+https://github.com/mmig/mmir-plugin-speech-nuance.git
+    cordova plugin add git+https://github.com/mmig/mmir-plugin-speech-nuance.git --variable NUANCE_SPEECHKIT_VERSION=<version string, e.g. "2.2+">
+    cordova plugin add git+https://github.com/mmig/mmir-plugin-speech-nuance.git --variable MMIR_PLUGIN_MODE=<one of "normal" | "compat" | "webpack">
 
 
 
