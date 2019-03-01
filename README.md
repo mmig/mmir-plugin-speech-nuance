@@ -177,8 +177,8 @@ _(if you encounter problems, you should try to avoid using the symbolic links in
 the MMIR modules the give access to the speech recognition / synthesis will be copied
     from the plugin directory 
 
-    /www/nuanceAudioInput.js
-    /www/nuanceTextToSpeech.js
+    /www/asrNuance.js
+    /www/ttsNuance.js
  
 into into the platform folders of the www-resource files to: 
 
@@ -197,14 +197,14 @@ TIP: if you are using _Eclipse_ you can add _links_ to these files in your proje
   ...
   <linkedResources>
     <link>
-      <name>www/mmirf/env/media/nuanceAudioInput.js</name>
+      <name>www/mmirf/env/media/asrNuance.js</name>
       <type>1</type>
-      <locationURI>$%7BPROJECT_LOC%7D/plugins/dfki-mmir-plugin-speech-nuance/www/nuanceAudioInput.js</locationURI>
+      <locationURI>$%7BPROJECT_LOC%7D/plugins/dfki-mmir-plugin-speech-nuance/www/asrNuance.js</locationURI>
     </link>
     <link>
-      <name>www/mmirf/env/media/nuanceTextToSpeech.js</name>
+      <name>www/mmirf/env/media/ttsNuance.js</name>
       <type>1</type>
-      <locationURI>$%7BPROJECT_LOC%7D/plugins/dfki-mmir-plugin-speech-nuance/www/nuanceTextToSpeech.js</locationURI>
+      <locationURI>$%7BPROJECT_LOC%7D/plugins/dfki-mmir-plugin-speech-nuance/www/ttsNuance.js</locationURI>
     </link>
   </linkedResources>
   ...
@@ -226,13 +226,13 @@ for the MediaManager plugins, i.e. edit the JSON file to:
 
     "mediaManager": {
     	"plugins": {
-    		"browser": ["html5AudioOutput.js",
-    		            "webkitAudioInput.js",
-    		            "maryTextToSpeech.js"
+    		"browser": [{"mod": "webAudio", "type": "audio"},
+    		            {"mod": "webspeechAudioInput", "type": "asr"},
+    		            {"mod": "ttsaudio", "type": "tts"}
     		],
-    		"cordova": ["cordovaAudioOutput.js",
-    		            "nuanceAudioInput.js",
-    		            "nuanceTextToSpeech.js"
+    		"cordova": [{"mod": "cordovaAudio", "type": "audio"},
+    		            {"mod": "asrNuance", "type": "asr"},
+    		            {"mod": "ttsNuance", "type": "tts"}
     		]
     	}
     }
@@ -240,8 +240,8 @@ for the MediaManager plugins, i.e. edit the JSON file to:
  ...
 }
 ```
-change the `"cordova"` array entries to `"nuanceAudioInput.js"` (for ASR) and
-`"nuanceTextToSpeech.js"` (for TTS) in order to use the Nuance ASR- and TTS-
+change the `"cordova"` array entries to `"asrNuance.js"` (for ASR) and
+`"ttsNuance.js"` (for TTS) in order to use the Nuance ASR- and TTS-
 engine, when the application is run as Cordova app.
 
 

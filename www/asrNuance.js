@@ -34,7 +34,7 @@ newMediaPlugin = {
 		initialize: function(callBack, mediaManager){
 			
 			/**  @memberOf NuanceAndroidAudioInput# */
-			var _pluginName = 'nuanceAudioInput';
+			var _pluginName = 'asrNuance';
 			
 			/** 
 			 * legacy mode: use pre-v4 API of mmir-lib
@@ -549,7 +549,7 @@ newMediaPlugin = {
 							logger.debug("Calling error callback (" + error_code + ").");
 							cb(error_msg, error_code, error_suggestion, error_type);
 						} else {
-							logger.error("nuanceAudioInput Error: No callback function defined for failure.");
+							logger.error("No callback function defined for failure.");
 						}
 					}
 				});

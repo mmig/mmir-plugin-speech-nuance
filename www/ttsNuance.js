@@ -34,7 +34,7 @@ newMediaPlugin = {
 		initialize: function(callBack, mediaManager, contextId){
 			
 			/**  @memberOf NuanceAndroidTextToSpeech# */
-			var _pluginName = 'nuanceTextToSpeech';
+			var _pluginName = 'ttsNuance';
 			
 			/** 
 			 * legacy mode: use pre-v4 API of mmir-lib

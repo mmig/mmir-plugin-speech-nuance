@@ -40,6 +40,45 @@
     <!--preference name="nuanceAppKey" default="NOT_SET" /-->
     <!--preference name="nuanceServerUrl" default="NOT_SET" /-->
     <!--preference name="nuanceServerPort" default="443" /-->
+    
+    <!-- MMIR_PLUGIN_MODE: "normal" | "compat" | "webpack" -->
+    <preference name="MMIR_PLUGIN_MODE" default="normal" />
+    <hook src="res\before_plugin_install_hook.js" type="before_plugin_install" />
+    
+<info>
+----------------------------------------------------------------------------------------------------------
+NOTE: If you you are using MMIR framework &lt; 5.0 you may need to install the plugin in compatiblity mode:
+
+1. edit `[www]/config/configuration.json` and change the entries in `mediaManager.plugins`:
+    * "nuanceAudioInput" -&gt; "asrNuance"
+    * "nuanceTextToSpeech" -&gt; "ttsNuance"
+
+2. either set variable `MMIR_PLUGIN_MODE=compat` during installation or 
+   specify a `preference` in `config.xml` before installing the plugin
+   (you may need to uninstall the plugin again before setting compat mode)
+
+
+## Install with Variable
+
+run:
+`cordova plugin install ... --variable MMIR_PLUGIN_MODE=compat`
+
+
+## Set Preference
+
+add to `config.xml`:
+`&lt;preference name="MMIR_PLUGIN_MODE" value="compat" /&gt;`
+
+
+## Webpack
+
+If you are using the webpack integration `mmir-webpack` you should install with `webpack` mode, i.e
+`MMIR_PLUGIN_MODE=webpack`
+
+(in this case, not specifying `webpack` mode will introduce some additional unused code)
+----------------------------------------------------------------------------------------------------------
+</info>
+
 
     <js-module src="www/nuance.js" name="nuanceSpeechPlugin">
     	<clobbers target="window.cordova.plugins.nuanceSpeechPlugin" />
@@ -47,11 +86,11 @@
     
     <!-- module implementation for integration into MMIR framework  -->
     <asset
-        src="www/nuanceAudioInput.js"
-        target="mmirf/env/media/nuanceAudioInput.js" />
+        src="www/asrNuance.js"
+        target="mmirf/env/media/asrNuance.js" />
     <asset
-        src="www/nuanceTextToSpeech.js"
-        target="mmirf/env/media/nuanceTextToSpeech.js" />
+        src="www/ttsNuance.js"
+        target="mmirf/env/media/ttsNuance.js" />
 
 
 	<dependency id="mmir-plugin-speech-nuance-lang" url="git+https://gitlab-cos.b.dfki.de/mmir/mmir-plugin-speech-nuance-lang.git" commit="master" />

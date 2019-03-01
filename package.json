@@ -34,6 +34,29 @@
       }
     }
   },
+  "main": "./www/asrNuance.js",
+  "directories": {
+    "lib": "./www"
+  },
+  "types": "index.d.ts",
+  "scripts": {
+    "build": "createplugincompat ./ && pluginexport ./"
+  },
+  "mmir": {
+    "exports": [
+      "./www/ttsNuance.js"
+    ],
+    "compat": {
+      "./www/asrNuance.js": {
+        "file": "./www/alt/asrNuanceCompat.js",
+        "type": "media"
+      },
+      "./www/ttsNuance.js": {
+        "file": "./www/alt/ttsNuanceCompat.js",
+        "type": "media"
+      }
+    }
+  },
   "author": "russa",
   "license": "MIT",
   "bugs": {
@@ -42,5 +65,8 @@
   "homepage": "https://github.com/mmig/mmir-plugin-speech-nuance#readme",
   "dependencies": {
     "mmir-plugin-speech-nuance-lang": "git+https://gitlab-cos.b.dfki.de/mmir/mmir-plugin-speech-nuance-lang.git"
+  },
+  "devDependencies": {
+    "mmir-plugin-exports": "git+https://gitlab-cos.b.dfki.de/mmir/mmir-plugin-exports.git"
   }
 }
