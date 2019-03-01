@@ -5,3 +5,4 @@ bin
 /.classpath
 /proguard-project.txt
 /project.properties
+node_modules/
