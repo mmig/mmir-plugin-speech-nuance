@@ -28,6 +28,8 @@
 var exec = require('cordova/exec'),
 	utils = require('cordova/utils');
 
+var langTools = require('mmir-plugin-speech-nuance-lang.languageSupport');
+
 /**
  *  
  * @return Instance of NuancePlugin
@@ -59,6 +61,15 @@ NuancePlugin.prototype.tts = function(text, language, successCallback, failureCa
 	
 	var isSsml = false;
 	var isTextArray = utils.isArray(text);
+	
+	if(voice){
+		//voice may be a voice-name or a filter like "female" / "male" -> find "best matching" voice:
+		 var voiceInfo = langTools.ttsSelectVoice(language, voice);
+		 if(voiceInfo){
+			 voice = voiceInfo.name;
+		 }
+		 //else: will probably trigger error in native code, since voice-parameter did not get recognized!  
+	}
 	
 	//TODO impl. parameter voice, pauseDuration without using SSML?
 	if(isTextArray){//NOTE pauseDuration is only relevant for sentence-lists (i.e. array) // || isFinite(pauseDuration)){
@@ -239,6 +250,90 @@ NuancePlugin.prototype.cancelRecognition = function(successCallback, failureCall
  					 'cancel_asr',
  					 []);
 };
+
+/**
+ * Get all available ASR languages:
+ * <code>successCallback(languageList: Array<string>)</code>
+ *
+ * @function getLanguages
+ * @param {Object} successCallback
+ * @param {Object} errorCallback
+ */
+NuancePlugin.prototype.getRecognitionLanguages = function(successCallback, errorCallback) {
+	doInvokeAsync(function(){
+			return langTools.asrLanguages();
+		},
+		successCallback, errorCallback
+	);
+};
+
+/**
+ * Get all available TTS languages:
+ * <code>successCallback(languageList: Array<string>)</code>
+ *
+ * @function getSpeechLanguages
+ * @param {Object} successCallback
+ * @param {Object} errorCallback
+ */
+NuancePlugin.prototype.getSpeechLanguages = function(successCallback, errorCallback) {
+	doInvokeAsync(function(){
+			return langTools.ttsLanguages();
+		},
+		successCallback, errorCallback
+	);
+};
+
+/**
+ * Get all available voices of the AndroidTTSPlugin service:
+ * <code>successCallback(voiceList: Array<string>)</code>
+ *
+ * @function getVoices
+ * @param {String} [language] language code: if specified, only voices for matching the language will be returned
+ * @param {Boolean} [includeDetails] if TRUE, the returned list will be comprised of entries with {name: STRING, language: STRING, gender: "female" | "male"}
+ * @param {Object} successCallback
+ * @param {Object} errorCallback
+ */
+NuancePlugin.prototype.getVoices = function(language, includeDetails, successCallback, errorCallback) {
+	
+	if(typeof language === 'function'){
+		errorCallback = includeDetails;
+		successCallback = language;
+		language = '';
+		includeDetails = false;
+	} else if(typeof includeDetails === 'function'){
+		errorCallback = successCallback;
+		successCallback = includeDetails;
+		if(typeof language === 'boolean'){
+			includeDetails = language;	
+			language = '';
+		} else {
+			includeDetails = false;
+		}
+	}
+	
+	doInvokeAsync(function(){
+    		return includeDetails? langTools.ttsVoices(language) : langTools.ttsVoiceNames(language);
+    	},
+    	successCallback, errorCallback
+    );
+};
+
+function doInvokeAsync(func, successCallback, errorCallback){
+	
+	//use setTimeout() to simulate async behavior
+    setTimeout(function(){
+    	try{
+    		var result = func();
+    		successCallback && successCallback(result);
+    	} catch(err){
+    		if(errorCallback){
+    			errorCallback(err && err.stack? err.stack : ''+err);
+    		} else {
+    			console.error(err);
+    		}
+    	}
+    }, 0);
+}
 
 /**
  * Functions for listening to the microphone levels

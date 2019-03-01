@@ -723,6 +723,14 @@ newMediaPlugin = {
 
 					nuancePlugin.cancelRecognition(successCallBack, failureCallBack);
 				},
+				/**
+				 * @public
+				 * @memberOf NuanceNuanceAndroidAudioInput.prototype
+				 * @see mmir.MediaManager#getRecognitionLanguages
+				 */
+				getRecognitionLanguages: function(successCallBack,failureCallBack){
+					nuancePlugin.getRecognitionLanguages(successCallBack, failureCallBack);
+				},
 				getMicLevels: function(successCallback,failureCallback){
 
 					nuancePlugin.getMicLevels(

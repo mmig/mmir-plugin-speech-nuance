@@ -89,7 +89,7 @@ newMediaPlugin = {
 			 *   
 			 * @memberOf NuanceAndroidTextToSpeech#
 			 */
-			var _langSeparator = '_';
+			var _langSeparator = '-';
 			
 			/** 
 			 * @type mmir.LanguageManager
@@ -250,7 +250,7 @@ newMediaPlugin = {
 							options.ready = onReadyCallback;
 						}
 						
-						options.language = options.language? options.language : languageManager.getLanguageConfig(_pluginName, 'language', _langSeparator);
+						options.language = options.language? options.language : languageManager.getLanguageConfig(_pluginName, 'long', _langSeparator);
 						options.pauseDuration = options.pauseDuration? options.pauseDuration : void(0);
 						options.voice = options.voice? options.voice : languageManager.getLanguageConfig(_pluginName, 'voice');
 				    	
@@ -288,7 +288,53 @@ newMediaPlugin = {
 	    			},
 					setTextToSpeechVolume: function(newValue){
 	    				//FIXME implement this? how? Nuance library gives no access to audio volume (we could set the Android volume level ...)
-					}
+					},
+	    			/**
+	    			 * @public
+	    			 * @memberOf NuanceAndroidTextToSpeech.prototype
+	    			 * @see mmir.MediaManager#getSpeechLanguages
+	    			 */
+	    			getSpeechLanguages: function(successCallback,failureCallback){
+
+	    				nuancePlugin.getSpeechLanguages(
+	    						successCallback, 
+	    						failureCallback
+	    				);
+
+	    			},
+	    			/**
+	    			 * @public
+	    			 * @memberOf NuanceAndroidTextToSpeech.prototype
+	    			 * @see mmir.MediaManager#getVoices
+	    			 */
+	    			getVoices: function(options, successCallback, failureCallback){
+	    				
+	    				var args = [];
+	    				if(typeof options === 'function'){
+	    					
+	    					failureCallback = successCallback;
+	    					successCallback = options;
+	    					
+	    				} else if(options){
+	    					
+	    					if(typeof options === 'string'){
+	    						
+	    						args.push(options);
+	    						
+	    					} else {
+
+	    						if(typeof options.language !== 'undefined'){
+	    							args.push(options.language);
+	    						}
+	    						if(typeof options.details !== 'undefined'){
+	    							args.push(!!options.details);
+	    						}
+	    					}
+	    				}
+	    				args.push(successCallback, failureCallback);
+	    				nuancePlugin.getVoices.apply(nuancePlugin, args);
+
+	    			}
 			});	
 		}
 };

@@ -52,6 +52,9 @@
     <asset
         src="www/nuanceTextToSpeech.js"
         target="mmirf/env/media/nuanceTextToSpeech.js" />
+
+
+	<dependency id="mmir-plugin-speech-nuance-lang" url="git+https://gitlab-cos.b.dfki.de/mmir/mmir-plugin-speech-nuance-lang.git" commit="master" />
        
     <!-- android -->
     <platform name="android">

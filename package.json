@@ -26,7 +26,12 @@
   ],
   "engines": {
     "cordovaDependencies": {
-      "0.13.0": { "cordova-android": ">=4.0.0", "cordova-ios": ">=4.3.0", "cordova": ">=6.4.0" }
+      "0.13.0": {
+        "cordova-android": ">=4.0.0",
+        "cordova-ios": ">=4.3.0",
+        "cordova": ">=6.4.0",
+        "git+https://gitlab-cos.b.dfki.de/mmir/mmir-plugin-speech-nuance-lang.git": ">=1.0.0"
+      }
     }
   },
   "author": "russa",
@@ -34,5 +39,8 @@
   "bugs": {
     "url": "https://github.com/mmig/mmir-plugin-speech-nuance/issues"
   },
-  "homepage": "https://github.com/mmig/mmir-plugin-speech-nuance#readme"
+  "homepage": "https://github.com/mmig/mmir-plugin-speech-nuance#readme",
+  "dependencies": {
+    "mmir-plugin-speech-nuance-lang": "git+https://gitlab-cos.b.dfki.de/mmir/mmir-plugin-speech-nuance-lang.git"
+  }
 }
