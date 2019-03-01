@@ -19,7 +19,11 @@ def NUANCE_SPEECHKIT_VERSION_STRING = cdvHelpers.getConfigPreference("NUANCE_SPE
 println("| Using version " + NUANCE_SPEECHKIT_VERSION_STRING + " for Nuance SpeechKit.");
 
 dependencies {
-  implementation 'com.nuance:speechkit:' + NUANCE_SPEECHKIT_VERSION_STRING + '@aar'
+  try {
+    implementation 'com.nuance:speechkit:' + NUANCE_SPEECHKIT_VERSION_STRING + '@aar'
+  } catch(all){
+  	compile 'com.nuance:speechkit:' + NUANCE_SPEECHKIT_VERSION_STRING + '@aar'
+  }
   //ENABLE / use instead of above line when using local AAR file & resources
 //  implementation(name:'speechkit-2.2.4', ext:'aar')
 }
