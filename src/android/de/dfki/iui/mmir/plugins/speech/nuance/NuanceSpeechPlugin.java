@@ -629,7 +629,7 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 
   class ExtendedRecognizerListener extends Transaction.Listener { //implements Recognition.Listener {
 
-    private static final String JS_PLUGIN_ID = "dfki-mmir-plugin-speech-nuance.nuanceSpeechPlugin";
+    private static final String JS_PLUGIN_ID = "mmir-plugin-speech-nuance.nuanceSpeechPlugin";
     private static final String HANDLER_NAME = "NuanceEngine";
     private final long audioLevelResolution = 50l;//milliseconds (interval / delays for polling audio-levels from recognizer)
 

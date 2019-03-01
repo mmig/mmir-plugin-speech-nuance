@@ -73,7 +73,7 @@ import SpeechKit
         static let ASR_TYPE_RECORDING_BEGIN: String = "RECORDING_BEGIN"
         static let ASR_TYPE_RECORDING_DONE: String = "RECORDING_DONE"
         static let EMPTY_STRING: String = ""
-        static let JS_PLUGIN_ID: String = "dfki-mmir-plugin-speech-nuance.nuanceSpeechPlugin"
+        static let JS_PLUGIN_ID: String = "mmir-plugin-speech-nuance.nuanceSpeechPlugin"
 
         static let MIC_LEVEL_DELAY: Double = 0.05
         //SpeakResultTypes for TTS

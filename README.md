@@ -199,12 +199,12 @@ TIP: if you are using _Eclipse_ you can add _links_ to these files in your proje
     <link>
       <name>www/mmirf/env/media/asrNuance.js</name>
       <type>1</type>
-      <locationURI>$%7BPROJECT_LOC%7D/plugins/dfki-mmir-plugin-speech-nuance/www/asrNuance.js</locationURI>
+      <locationURI>$%7BPROJECT_LOC%7D/plugins/mmir-plugin-speech-nuance/www/asrNuance.js</locationURI>
     </link>
     <link>
       <name>www/mmirf/env/media/ttsNuance.js</name>
       <type>1</type>
-      <locationURI>$%7BPROJECT_LOC%7D/plugins/dfki-mmir-plugin-speech-nuance/www/ttsNuance.js</locationURI>
+      <locationURI>$%7BPROJECT_LOC%7D/plugins/mmir-plugin-speech-nuance/www/ttsNuance.js</locationURI>
     </link>
   </linkedResources>
   ...

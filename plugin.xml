@@ -3,8 +3,8 @@
 <plugin 
     xmlns="http://cordova.apache.org/ns/plugins/1.0"
 	xmlns:android="http://schemas.android.com/apk/res/android"
-    id="dfki-mmir-plugin-speech-nuance"
-    version="0.13.2">
+    id="mmir-plugin-speech-nuance"
+    version="1.0.0">
 
     <name>NuanceSpeechPlugin</name>
     
@@ -43,7 +43,7 @@
     
     <!-- MMIR_PLUGIN_MODE: "normal" | "compat" | "webpack" -->
     <preference name="MMIR_PLUGIN_MODE" default="normal" />
-    <hook src="res\before_plugin_install_hook.js" type="before_plugin_install" />
+    <hook src="res/js/before_plugin_install_hook.js" type="before_plugin_install" />
     
 <info>
 ----------------------------------------------------------------------------------------------------------

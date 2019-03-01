@@ -1,9 +1,9 @@
 {
-  "name": "dfki-mmir-plugin-speech-nuance",
-  "version": "0.13.2",
+  "name": "mmir-plugin-speech-nuance",
+  "version": "1.0.0",
   "description": "Cordova plugin for Nuance speech recognizer / syntheziser (using Nuance SpeechKit v2.x)",
   "cordova": {
-    "id": "dfki-mmir-plugin-speech-nuance",
+    "id": "mmir-plugin-speech-nuance",
     "platforms": [
       "android",
       "ios"
