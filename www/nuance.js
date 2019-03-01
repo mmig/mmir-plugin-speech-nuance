@@ -39,24 +39,6 @@ var NuancePlugin = function() {
 	this.__micListener = [];
 	//current language setting, DEFAULT: eng-GBR
 	this._currentLanguage = 'eng-GBR';
-	//if init was already invoked
-	this._init = false;
-};
-
-/**
- * initialize the Nuance plugin by setting the credentials for the SpeechKit service (may also be set via Cordova's config.xml, see README).
- * 
- * NOTE: if called multiple times, successive invocations will be ignored, use {@link #setCredentials} instead
- *  
- * @see #setCredentials
- */
-NuancePlugin.prototype.init = function(credentials, successCallback, failureCallback) {
-	
-	if(this._init){
-		return;/////////////EARLY EXIT //////////////////
-	}
-	this._init = true;
-	this.setCredentials(credentials, successCallback, failureCallback);
 };
 
 /**
