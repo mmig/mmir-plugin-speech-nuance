@@ -276,13 +276,20 @@ public class NuanceSpeechPlugin extends CordovaPlugin {
 	    	prefs.set(Credentials.NUANCE_SERVER_URL,  data.optString(2));
 	    	prefs.set(Credentials.NUANCE_SERVER_PORT, data.optString(3));
 	    	
-	    	Credentials.init(prefs);
+	    	if(Credentials.init(prefs)){
 	    	
-	    	//force re-initialization
-	    	NuanceEngine.releaseInstanceResource();
-	    	NuanceEngine.getInstance();
+		    	//force re-initialization
+		    	NuanceEngine.releaseInstanceResource();
+		    	NuanceEngine.getInstance();
+		    	result = new PluginResult(Status.OK);
+		    	
+	    	} else {
+	    		
+	    		String err = Credentials.validationErrors(prefs);
+	            LOG.e(PLUGIN_NAME, action + ": Failed to set credentials: " + err);
+	            result = new PluginResult(Status.ERROR, err);
+	    	}
 	    	
-	    	result = new PluginResult(Status.OK);
 	    	
     	} catch(Exception e){
             LOG.e(PLUGIN_NAME, action + ": Failed to set credentials.", e);
