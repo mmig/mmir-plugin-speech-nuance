@@ -241,6 +241,37 @@ newMediaPlugin = {
 			}
 
 			/**
+			 * HELPER check if configuration has credentials, and apply them
+			 * 
+			 * TODO extract helper & (re-) in asr and in tts plugin integration
+			 * 
+			 * @private
+			 * @memberOf NuanceAndroidAudioInput#
+			 */
+			function applyConfigCred(){
+				var appId = _conf([_pluginName, 'appId']);
+				var appKey = appId? _conf([_pluginName, 'appKey']) : null;
+				if(appId && appKey){
+					var url = _conf([_pluginName, 'baseUrl']);
+					var port = _conf([_pluginName, 'port']);
+					nuancePlugin.setCredentials(
+						{appId: appId, appKey: appKey, baseUrl: url, port: port},
+						function(){
+							logger.debug('successfully applied credentials from configuration');
+						},
+						function(err){
+							logger.error('failed to apply credentials from configuration: ', err);
+						}
+					);
+				} else if(logger.isv()){
+					logger.verbose('no or missing credentials in configuration (may have been set via config.xml): config for appId=' + appId + ', config for appKey=' + appKey);
+				}
+			}
+			
+			//if credentials are provided via configuration, apply them:
+			applyConfigCred();
+
+			/**
 			 * MIC-LEVELS: Name for the event that is emitted, when the input-mircophone's level change.
 			 * 
 			 * @private
@@ -602,7 +633,7 @@ newMediaPlugin = {
 					options.success = statusCallback? statusCallback : options.success;
 					options.error = failureCallback? failureCallback : options.error;
 					options.intermediate = typeof intermediateResults === 'boolean'? intermediateResults : !!options.intermediate;
-					options.language = options.language? options.language : languageManager.getLanguageConfig(_pluginName);
+					options.language = options.language? options.language : languageManager.getLanguageConfig(_pluginName) || DEFAULT_LANGUAGE;
 					options.disableImprovedFeedback = typeof isDisableImprovedFeedback === 'boolean'? isDisableImprovedFeedback : !!options.disableImprovedFeedback;
 					options.results = options.results? options.results : DEFAULT_ALTERNATIVE_RESULTS;
 					options.mode = options.mode? options.mode : DEFAULT_LANGUAGE_MODEL;

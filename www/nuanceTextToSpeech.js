@@ -132,6 +132,37 @@ newMediaPlugin = {
 			if(typeof loglevel !== 'undefined'){
 				logger.setLevel(loglevel);
 			}
+
+			/**
+			 * HELPER check if configuration has credentials, and apply them
+			 * 
+			 * TODO extract helper & (re-) in asr and in tts plugin integration
+			 * 
+			 * @private
+			 * @memberOf NuanceAndroidTextToSpeech#
+			 */
+			function applyConfigCred(){
+				var appId = _conf([_pluginName, 'appId']);
+				var appKey = appId? _conf([_pluginName, 'appKey']) : null;
+				if(appId && appKey){
+					var url = _conf([_pluginName, 'baseUrl']);
+					var port = _conf([_pluginName, 'port']);
+					nuancePlugin.setCredentials(
+						{appId: appId, appKey: appKey, baseUrl: url, port: port},
+						function(){
+							logger.debug('successfully applied credentials from configuration');
+						},
+						function(err){
+							logger.error('failed to apply credentials from configuration: ', err);
+						}
+					);
+				} else if(logger.isv()){
+					logger.verbose('no or missing credentials in configuration (may have been set via config.xml): config for appId=' + appId + ', config for appKey=' + appKey);
+				}
+			}
+			
+			//if credentials are provided via configuration, apply them:
+			applyConfigCred();
 			
 			/** 
 			 * @type Function
