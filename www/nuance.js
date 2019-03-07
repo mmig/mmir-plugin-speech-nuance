@@ -102,14 +102,6 @@ NuancePlugin.prototype.tts = function(text, language, successCallback, failureCa
 };
 
 /**
- * @deprecated use #tts function instead (NOTE the different order of the arguments!)
- * @type Function
- */
-NuancePlugin.prototype.speak = function(text, successCallback, failureCallback, language, pauseDuration, voice){
-	this.tts(text, language, successCallback, failureCallback, pauseDuration, voice);
-};
-
-/**
  * Start speech recognition (with End-of-Speech detection, i.e. automatically stops).
  */
 NuancePlugin.prototype.recognize = function(language, successCallback, failureCallback){
@@ -163,14 +155,6 @@ NuancePlugin.prototype.startRecord = function(language, successCallback, failure
   					 args);
 	}
 };
-
-/**
- * @deprecated use #startRecord function instead
- * @type Function
- */
-NuancePlugin.prototype.recognizeNoEOS = function(language, successCallback, failureCallback, withIntermediateResults){
-	this.startRecord(language, successCallback, failureCallback, withIntermediateResults);
-};
 	
 /**
  * Stops speech recognition: results will be returned in the successCallback, either
@@ -193,7 +177,7 @@ NuancePlugin.prototype.stopRecord = function(successCallback, failureCallback){
  * --in this case the <code>failureCallback</code>-- is triggered too).
  * 
  * <p>
- * IMPORTANT: for backwards-compatability, this function triggers
+ * IMPORTANT: for backwards-compatibility, this function triggers
  * 		 <code>failureCallback</code> in case of success, and
  * 		 <code>successCallback</code> in case of an error!
  * 
@@ -533,7 +517,7 @@ function _toSsml(sentences, lang, pauseDuration, voice){
  * @param {String|""} pauseDuration
  * 				the pause duration as a number within a string
  * 				(or an empty string for using the default pause duration)
- * @param {Array<String> stringBuffer
+ * @param {Array<String>} stringBuffer
  * 				the string-buffer containing the SSML text so far
  * 				(to which the pause-element will be added)
  */
