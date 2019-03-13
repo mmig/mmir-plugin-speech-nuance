@@ -3,7 +3,7 @@ export * from './config';
 
 /// <reference types="mmir-lib" />
 import { MediaManager, ASROnStatus, ASROnError, ASRMode, EOSPause, ASROptions } from 'mmir-lib';
-import { TTSOnError, TTSOnComplete, TTSOnReady, TTSOptions } from 'mmir-lib';
+import { TTSOnError, TTSOnComplete, TTSOnReady, TTSOptions, VoiceListOptions, VoiceDetails } from 'mmir-lib';
 
 declare interface PluginASROptions extends ASROptions {
   /**
