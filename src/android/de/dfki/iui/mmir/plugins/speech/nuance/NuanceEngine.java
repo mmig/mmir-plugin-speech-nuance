@@ -47,28 +47,27 @@ public class NuanceEngine {
 
   public static boolean createInstance(Context ctx, CordovaPreferences prefs) {
 	  
-    boolean isRecreated = false;
+    boolean isInitialized = false;
     if (instance == null) {
     	
       instance = new NuanceEngine(ctx, prefs);
-      isRecreated = true;
+      isInitialized = instance.isInitializedResources();
       
     } else if (ctx != instance._context) {
 
-      instance.releaseResources();
-
+      instance.releaseResources();//<- release resources of previous context
       instance = new NuanceEngine(ctx, prefs);
-      isRecreated = true;
+      isInitialized = instance.isInitializedResources();
       
     } else if (!instance.isInitializedResources()) {
     	
 	  if(Credentials.isValid(prefs)){
 	    instance.initializeResources();
 	  }
-      isRecreated = true;
+      isInitialized = instance.isInitializedResources();
     }
 
-    return isRecreated;
+    return isInitialized;
   }
   
   public static boolean releaseInstanceResource() {
