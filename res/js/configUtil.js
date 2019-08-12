@@ -32,14 +32,48 @@ function getConfigXml(ctx){
 }
 
 /**
+ * check if cordova version is <code>versionNum</code> or later
+ * (if isBefore is TRUE: same or earlier).
+ *  
+ * @param ctx {Context} cordova context
+ * @param versionNum {Number} major version number
+ * @param isBefore {Boolean} if true, check "same or earlier" instead of "same or later"
+ * @returns boolean
+ */
+function isCordovaVersion(ctx, versionNum, isBefore){
+	var verStr = ctx.opts.cordova.version;
+	var verNum = parseInt(verStr, 10);
+	if(!isFinite(verNum)){
+		throw new Error('Could not determine version of cordova from context.opts.cordova.version, tried to parse '+verStr);
+	}
+	return isBefore? verNum <= versionNum : verNum >= versionNum;
+}
+
+/**
  * parse CLI variable options, i.e. "--variable x1=v1 --variable x2=v2 ..."
  *  
  * @param ctx {Context} cordova context
  * @returns {{cli_variables: Object}}
  */
 function parseCliVariableArgs(ctx){
-
-	var nopt = ctx.requireCordovaModule('nopt');
+	
+	var isCordova8 = isCordovaVersion(ctx, 8, true);
+	log(ctx, 'parseCliVariableArgs for Cordova '+ (isCordova8? '8 or earlier' : '9 or later'));
+	var nopt;
+	if(isCordova8){
+		nopt = ctx.requireCordovaModule('nopt');
+	} else {
+		try {
+			nopt = require('nopt');
+		} catch(err){
+			var pluginName = ctx.opts.plugin.id;
+			throw new Error(
+				'Could not require module "nopt" for installing '+pluginName+
+				': may not be dependency of cordova anymore -> need to check how cordova-cli parses command line arguments!'
+			);
+		}
+	}
+	
 	var cli_opts = nopt({
 		'variable' : [String, Array]
 	}, process.argv);
